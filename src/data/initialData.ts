@@ -3,8 +3,8 @@ import { Product, MlmLead, Booking, SaleAttribution, MlmMember, AwardItem, CMSCo
 export const initialCMSContent: CMSContent = {
   brandName: 'ماريا ستايل | MARIA STYLE',
   brandTagline: 'عالم الجمال الملكي والحرية المالية مع Alialyna & HomeLife',
-  officialWhatsApp: '+905528889900',
-  officialPhone: '+90 552 888 99 00',
+  officialWhatsApp: '⁦+90 552 305 44 85⁩',
+  officialPhone: '⁦+90 552 305 44 85⁩',
   emailContact: 'contact@mariastyle-vip.com',
   logoUrl: '/assets/aistudio/LOGO_5dd3ae33.png',
   madameFatimaPhoto: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=800&q=80',
