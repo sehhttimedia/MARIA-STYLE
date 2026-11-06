@@ -1,0 +1,70 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Default deny unknown top-level documents unless explicitly matched
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Admins metadata collection
+    match /admins/{adminId} {
+      allow read, write: if true;
+    }
+
+    // Global Public Content: Visible and synchronized for ALL visitors globally across all browsers and devices
+    // Catalog Products
+    match /products/{productId} {
+      allow read: if true;
+      allow write: if true;
+    }
+
+    // Live CMS Configuration (Brand name, phone numbers, WhatsApp, banners, photos)
+    match /cms_content/{docId} {
+      allow read: if true;
+      allow write: if true;
+    }
+
+    // Awards & Recognition Showcase
+    match /awards/{awardId} {
+      allow read: if true;
+      allow write: if true;
+    }
+
+    // MLM Members Directory
+    match /mlm_members/{memberId} {
+      allow read: if true;
+      allow write: if true;
+    }
+
+    // Global System & Google Workspace App Configuration (Active Spreadsheet ID, Sync status)
+    match /app_config/{docId} {
+      allow read: if true;
+      allow write: if true;
+    }
+
+    // Dynamic Form Field Configurations (MLM Join Form & Consultation Booking Form)
+    match /form_configs/{docId} {
+      allow read: if true;
+      allow write: if true;
+    }
+
+    // Inbound Leads (MLM Join Requests)
+    match /leads/{leadId} {
+      allow read: if true;
+      allow write: if true;
+    }
+
+    // Inbound Consultation Bookings
+    match /bookings/{bookingId} {
+      allow read: if true;
+      allow write: if true;
+    }
+
+    // Sales and Order Attributions
+    match /sales/{saleId} {
+      allow read: if true;
+      allow write: if true;
+    }
+  }
+}

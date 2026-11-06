@@ -1,0 +1,382 @@
+{
+  "entities": {
+    "Admin": {
+      "title": "Admin",
+      "description": "Authorized administrators for Maria Style platform",
+      "type": "object",
+      "properties": {
+        "email": {
+          "type": "string",
+          "description": "Administrator Google / Auth email",
+          "maxLength": 100
+        },
+        "role": {
+          "type": "string",
+          "description": "Admin access role level",
+          "enum": ["admin", "superadmin"]
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Creation timestamp"
+        }
+      },
+      "required": ["email", "role"]
+    },
+    "Lead": {
+      "title": "Lead",
+      "description": "MLM recruit applications submitted by visitors",
+      "type": "object",
+      "properties": {
+        "fullName": {
+          "type": "string",
+          "description": "Applicant full name",
+          "maxLength": 100
+        },
+        "phone": {
+          "type": "string",
+          "description": "Applicant phone number with country code",
+          "maxLength": 30
+        },
+        "country": {
+          "type": "string",
+          "description": "Country of residence",
+          "maxLength": 50
+        },
+        "city": {
+          "type": "string",
+          "description": "City of residence",
+          "maxLength": 50
+        },
+        "targetCompany": {
+          "type": "string",
+          "description": "Selected company partnership",
+          "enum": ["Alialyna", "HomeLife", "HelpMeChoose"]
+        },
+        "experience": {
+          "type": "string",
+          "description": "Prior direct sales or marketing experience",
+          "enum": ["none", "beginner", "intermediate", "leader"]
+        },
+        "availableHours": {
+          "type": "string",
+          "description": "Weekly available hours",
+          "maxLength": 50
+        },
+        "motivation": {
+          "type": "string",
+          "description": "Personal motivation to join",
+          "maxLength": 500
+        },
+        "attributionCode": {
+          "type": "string",
+          "description": "Affiliate or sponsor referral code",
+          "maxLength": 50
+        },
+        "status": {
+          "type": "string",
+          "description": "Processing status of the lead",
+          "enum": ["new", "contacted", "registered", "archived"]
+        },
+        "notes": {
+          "type": "string",
+          "description": "Internal administrator follow-up notes",
+          "maxLength": 1000
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Submission ISO date string"
+        }
+      },
+      "required": ["fullName", "phone", "targetCompany", "status"]
+    },
+    "Booking": {
+      "title": "Booking",
+      "description": "VIP private consultation appointment reservations",
+      "type": "object",
+      "properties": {
+        "clientName": {
+          "type": "string",
+          "description": "Client full name",
+          "maxLength": 100
+        },
+        "phone": {
+          "type": "string",
+          "description": "Client phone number",
+          "maxLength": 30
+        },
+        "consultationType": {
+          "type": "string",
+          "description": "Type of advisory consultation",
+          "enum": ["skincare", "business", "products", "mlm_onboarding"]
+        },
+        "preferredDate": {
+          "type": "string",
+          "description": "Requested appointment date (YYYY-MM-DD)",
+          "maxLength": 20
+        },
+        "preferredTime": {
+          "type": "string",
+          "description": "Requested appointment time slot",
+          "maxLength": 20
+        },
+        "notes": {
+          "type": "string",
+          "description": "Client optional notes or inquiry",
+          "maxLength": 500
+        },
+        "status": {
+          "type": "string",
+          "description": "Booking status",
+          "enum": ["pending", "confirmed", "completed", "cancelled"]
+        },
+        "adminNotes": {
+          "type": "string",
+          "description": "Admin notes for the meeting",
+          "maxLength": 1000
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Booking creation date"
+        }
+      },
+      "required": ["clientName", "phone", "consultationType", "preferredDate", "preferredTime", "status"]
+    },
+    "Sale": {
+      "title": "Sale",
+      "description": "Retail orders from Maria Style store",
+      "type": "object",
+      "properties": {
+        "orderId": {
+          "type": "string",
+          "description": "Unique order reference code",
+          "maxLength": 50
+        },
+        "customerName": {
+          "type": "string",
+          "description": "Purchaser name",
+          "maxLength": 100
+        },
+        "customerPhone": {
+          "type": "string",
+          "description": "Purchaser contact phone number",
+          "maxLength": 30
+        },
+        "totalAmount": {
+          "type": "number",
+          "description": "Total order amount"
+        },
+        "profitAmount": {
+          "type": "number",
+          "description": "Estimated profit margin"
+        },
+        "memberCode": {
+          "type": "string",
+          "description": "Referring member code",
+          "maxLength": 50
+        },
+        "memberName": {
+          "type": "string",
+          "description": "Referring member name",
+          "maxLength": 100
+        },
+        "commissionRate": {
+          "type": "number",
+          "description": "Commission rate percentage"
+        },
+        "commissionEarned": {
+          "type": "number",
+          "description": "Calculated commission amount"
+        },
+        "paymentStatus": {
+          "type": "string",
+          "description": "Payment workflow state",
+          "enum": ["paid", "pending", "cancelled"]
+        },
+        "orderDate": {
+          "type": "string",
+          "description": "Timestamp of order"
+        }
+      },
+      "required": ["orderId", "customerName", "customerPhone", "totalAmount", "paymentStatus"]
+    },
+    "Product": {
+      "title": "Product",
+      "description": "Cosmetic and luxury products in catalog",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Arabic primary product title",
+          "maxLength": 150
+        },
+        "nameTr": {
+          "type": "string",
+          "description": "Turkish product title",
+          "maxLength": 150
+        },
+        "nameEn": {
+          "type": "string",
+          "description": "English product title",
+          "maxLength": 150
+        },
+        "price": {
+          "type": "number",
+          "description": "Retail sale price"
+        },
+        "costPrice": {
+          "type": "number",
+          "description": "Wholesale acquisition cost"
+        },
+        "currency": {
+          "type": "string",
+          "description": "Currency code",
+          "maxLength": 10
+        },
+        "category": {
+          "type": "string",
+          "description": "Product category taxonomy",
+          "enum": ["skincare", "haircare", "fragrance", "makeup", "wellness", "bundles"]
+        },
+        "categoryLabel": {
+          "type": "string",
+          "description": "Display label for category",
+          "maxLength": 50
+        },
+        "rating": {
+          "type": "number",
+          "description": "Average review score"
+        },
+        "reviewsCount": {
+          "type": "number",
+          "description": "Count of reviews"
+        },
+        "description": {
+          "type": "string",
+          "description": "Product detailed description",
+          "maxLength": 1500
+        },
+        "ingredients": {
+          "type": "string",
+          "description": "Ingredients listing",
+          "maxLength": 1000
+        },
+        "howToUse": {
+          "type": "string",
+          "description": "Application instructions",
+          "maxLength": 1000
+        },
+        "image": {
+          "type": "string",
+          "description": "Primary product image URL",
+          "maxLength": 500
+        },
+        "badge": {
+          "type": "string",
+          "description": "Marketing badge label",
+          "maxLength": 50
+        },
+        "inStock": {
+          "type": "boolean",
+          "description": "Availability flag"
+        },
+        "featured": {
+          "type": "boolean",
+          "description": "Featured in hero or highlight section"
+        },
+        "companyOrigin": {
+          "type": "string",
+          "description": "Partner brand origin",
+          "enum": ["Alialyna", "HomeLife", "MariaStyle"]
+        }
+      },
+      "required": ["name", "price", "category", "inStock"]
+    },
+    "CMSSetting": {
+      "title": "CMSSetting",
+      "description": "Live configuration and contact information",
+      "type": "object",
+      "properties": {
+        "brandName": {
+          "type": "string",
+          "description": "Official brand display name",
+          "maxLength": 100
+        },
+        "brandTagline": {
+          "type": "string",
+          "description": "Brand slogan",
+          "maxLength": 200
+        },
+        "officialWhatsApp": {
+          "type": "string",
+          "description": "Customer service WhatsApp number",
+          "maxLength": 30
+        },
+        "officialPhone": {
+          "type": "string",
+          "description": "Customer service voice phone",
+          "maxLength": 30
+        },
+        "emailContact": {
+          "type": "string",
+          "description": "Official contact email",
+          "maxLength": 100
+        },
+        "logoUrl": {
+          "type": "string",
+          "description": "Brand logo asset link",
+          "maxLength": 500
+        },
+        "heroTitle": {
+          "type": "string",
+          "description": "Main banner headline",
+          "maxLength": 200
+        },
+        "heroSubtitle": {
+          "type": "string",
+          "description": "Main banner supporting text",
+          "maxLength": 300
+        },
+        "announcementText": {
+          "type": "string",
+          "description": "Top marquee alert notice",
+          "maxLength": 300
+        },
+        "announcementActive": {
+          "type": "boolean",
+          "description": "Toggle visibility of banner"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Last modified timestamp"
+        }
+      },
+      "required": ["brandName", "officialWhatsApp"]
+    }
+  },
+  "firestore": {
+    "/admins/{adminId}": {
+      "schema": { "$ref": "Admin" },
+      "description": "System administrators mapping"
+    },
+    "/leads/{leadId}": {
+      "schema": { "$ref": "Lead" },
+      "description": "Inbound MLM recruit leads"
+    },
+    "/bookings/{bookingId}": {
+      "schema": { "$ref": "Booking" },
+      "description": "Customer VIP consultations"
+    },
+    "/sales/{saleId}": {
+      "schema": { "$ref": "Sale" },
+      "description": "Store customer orders and sales commissions"
+    },
+    "/products/{productId}": {
+      "schema": { "$ref": "Product" },
+      "description": "Product catalog"
+    },
+    "/cms_content/{docId}": {
+      "schema": { "$ref": "CMSSetting" },
+      "description": "Dynamic website content and branding configuration"
+    }
+  }
+}

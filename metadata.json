@@ -1,0 +1,6 @@
+{
+  "name": "ماريا ستايل | Maria Style - Alialyna & HomeLife",
+  "description": "المنصة الرسمية الرائدة للجمال ومستحضرات العناية الفاخرة وريادة الأعمال مع فريقي Alialyna و HomeLife بقيادة مدام فاطمة.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
