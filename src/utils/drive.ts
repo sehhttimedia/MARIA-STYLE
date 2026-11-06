@@ -13,10 +13,10 @@ export type FallbackType = 'logo' | 'story' | 'product' | 'award' | 'avatar';
 
 export const FALLBACK_ASSETS: Record<FallbackType, string> = {
   logo: '/assets/aistudio/LOGO_5dd3ae33.png',
-  story: 'https://drive.google.com/file/d/1L-Rccf4JPG7XjHVhnvoHTxk9T05wgTSA/view?usp=drive_link',
-  product: '',
-  award: '',
-  avatar: '',
+  story: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=800&q=80',
+  product: 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=800&q=80',
+  award: 'https://images.unsplash.com/photo-1531545514256-b1400bc00f31?auto=format&fit=crop&w=800&q=80',
+  avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80',
 };
 
 /**

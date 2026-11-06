@@ -47,7 +47,7 @@ export const MadameFatimaStory: React.FC = () => {
 
                 <div className="relative rounded-2xl overflow-hidden border-2 border-[#D4AF37]/40 shadow-2xl aspect-[4/5] bg-[#2E2429]">
                   <img
-                    src={https://lh3.googleusercontent.com/d/1LdXGHuutvWZKKPn_2ORP69GpL_Ozvav4}
+                    src={photoUrl}
                     alt="مدام فاطمة - مؤسسة ماريا ستايل"
                     onError={(e) => handleImageError(e, 'story')}
                     className="w-full h-full object-cover object-top transition-transform duration-500 group-hover:scale-105"

@@ -3,11 +3,11 @@ import { Product, MlmLead, Booking, SaleAttribution, MlmMember, AwardItem, CMSCo
 export const initialCMSContent: CMSContent = {
   brandName: 'ماريا ستايل | MARIA STYLE',
   brandTagline: 'عالم الجمال الملكي والحرية المالية مع Alialyna & HomeLife',
-  officialWhatsApp: '+90 552 305 44 85',
-  officialPhone: '+90 552 305 44 85',
+  officialWhatsApp: '+905528889900',
+  officialPhone: '+90 552 888 99 00',
   emailContact: 'contact@mariastyle-vip.com',
   logoUrl: '/assets/aistudio/LOGO_5dd3ae33.png',
-  madameFatimaPhoto: 'https://drive.google.com/file/d/1L-Rccf4JPG7XjHVhnvoHTxk9T05wgTSA/view?usp=drive_link',
+  madameFatimaPhoto: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=800&q=80',
   madameFatimaTitle: 'مدام فاطمة - القائدة الماسية ومؤسسة ماريا ستايل',
   madameFatimaStoryExcerpt: 'بدأت كأم طموحة تبحث عن وسيلة لدعم عائلتها دون التخلي عن بيتها وأطفالها. اليوم، أقود أكثر من 3,500 سيدة في تركيا والوطن العربي نحو الثراء والاستقلال المالي مع عمالقة الصناعة Alialyna و HomeLife.',
   madameFatimaFullStory: `قصتي بدأت في لحظة صدق مع نفسي: هل أنا مجرد متفرجة على الحياة أم صانعة لمستقبلي ومستقبل أطفالي؟
