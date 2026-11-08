@@ -30,6 +30,7 @@ export const AwardsSection: React.FC = () => {
           {awards.map((award) => {
             const mediaSrc = normalizeDriveUrl(award.mediaUrl, 'award');
             const displayTitle = language === 'tr' ? award.titleTr : language === 'en' ? award.titleEn : award.title;
+            const isVideo = award.mediaType === 'video' || award.mediaUrl.endsWith('.mp4') || award.mediaUrl.endsWith('.webm');
 
             return (
               <div
@@ -37,19 +38,50 @@ export const AwardsSection: React.FC = () => {
                 onClick={() => setLightboxAward(award)}
                 className="group relative rounded-3xl overflow-hidden glass-luxury border border-[#D4AF37]/30 shadow-md hover:shadow-2xl hover:border-[#D4AF37] transition-all duration-300 cursor-pointer flex flex-col justify-between"
               >
-                {/* Media Image */}
+                {/* Media Image or Video */}
                 <div className="relative aspect-[16/10] overflow-hidden bg-[#251D21]">
-                  <img
-                    src={mediaSrc}
-                    alt={displayTitle}
-                    loading="lazy"
-                    onError={(e) => handleImageError(e, 'award')}
-                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-108"
-                  />
+                  {isVideo ? (
+                    <video
+                      src={mediaSrc}
+                      muted
+                      loop
+                      playsInline
+                      preload="metadata"
+                      onMouseEnter={(e) => {
+                        try {
+                          e.currentTarget.play();
+                        } catch {
+                          // Ignored
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        try {
+                          e.currentTarget.pause();
+                        } catch {
+                          // Ignored
+                        }
+                      }}
+                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    />
+                  ) : (
+                    <img
+                      src={mediaSrc}
+                      alt={displayTitle}
+                      loading="lazy"
+                      onError={(e) => handleImageError(e, 'award')}
+                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-108"
+                    />
+                  )}
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-80 group-hover:opacity-60 transition-opacity" />
 
                   {/* Year & Company Badge */}
                   <div className="absolute top-3 end-3 flex items-center gap-1.5">
+                    {isVideo && (
+                      <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#C94C71] text-white flex items-center gap-1 shadow">
+                        <Sparkles className="w-3 h-3" />
+                        <span>فيديو موثق 🎬</span>
+                      </span>
+                    )}
                     <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#D4AF37] text-black">
                       {award.year}
                     </span>
@@ -58,9 +90,17 @@ export const AwardsSection: React.FC = () => {
                     </span>
                   </div>
 
-                  <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                    <span className="p-3 rounded-full bg-white/90 dark:bg-[#161114]/90 text-[#2D2A26] dark:text-[#FAF7F2] shadow-xl border border-transparent dark:border-[#D4AF37]/40">
-                      <Eye className="w-5 h-5 text-[#C94C71] dark:text-[#E55B82]" />
+                  <div className="absolute inset-0 flex items-center justify-center opacity-90 group-hover:opacity-100 transition-opacity">
+                    <span className="p-3.5 rounded-full bg-white/90 dark:bg-[#161114]/90 text-[#2D2A26] dark:text-[#FAF7F2] shadow-2xl border border-transparent dark:border-[#D4AF37]/50 group-hover:scale-110 transition-transform">
+                      {isVideo ? (
+                        <div className="w-6 h-6 flex items-center justify-center text-[#C94C71]">
+                          <svg className="w-5 h-5 fill-current ms-0.5" viewBox="0 0 24 24">
+                            <path d="M8 5v14l11-7z" />
+                          </svg>
+                        </div>
+                      ) : (
+                        <Eye className="w-5 h-5 text-[#C94C71] dark:text-[#E55B82]" />
+                      )}
                     </span>
                   </div>
                 </div>
@@ -104,13 +144,23 @@ export const AwardsSection: React.FC = () => {
             </button>
 
             {/* Media side */}
-            <div className="md:w-3/5 bg-black flex items-center justify-center">
-              <img
-                src={normalizeDriveUrl(lightboxAward.mediaUrl, 'award')}
-                alt={lightboxAward.title}
-                onError={(e) => handleImageError(e, 'award')}
-                className="w-full h-full max-h-[500px] object-contain"
-              />
+            <div className="md:w-3/5 bg-black flex items-center justify-center p-2">
+              {lightboxAward.mediaType === 'video' || lightboxAward.mediaUrl.endsWith('.mp4') || lightboxAward.mediaUrl.endsWith('.webm') ? (
+                <video
+                  src={normalizeDriveUrl(lightboxAward.mediaUrl, 'award')}
+                  controls
+                  autoPlay
+                  playsInline
+                  className="w-full h-full max-h-[500px] object-contain rounded-xl bg-black"
+                />
+              ) : (
+                <img
+                  src={normalizeDriveUrl(lightboxAward.mediaUrl, 'award')}
+                  alt={lightboxAward.title}
+                  onError={(e) => handleImageError(e, 'award')}
+                  className="w-full h-full max-h-[500px] object-contain"
+                />
+              )}
             </div>
 
             {/* Content side */}

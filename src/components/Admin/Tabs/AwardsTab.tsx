@@ -71,18 +71,32 @@ export const AwardsTab: React.FC = () => {
             className="glass-luxury rounded-2xl overflow-hidden border border-[#D4AF37]/30 shadow-md flex flex-col justify-between"
           >
             <div className="relative aspect-video bg-black/10 overflow-hidden">
-              <img
-                src={normalizeDriveUrl(award.mediaUrl, 'award')}
-                alt={award.title}
-                onError={(e) => handleImageError(e, 'award')}
-                className="w-full h-full object-cover"
-              />
+              {award.mediaType === 'video' || award.mediaUrl.endsWith('.mp4') || award.mediaUrl.endsWith('.webm') ? (
+                <video
+                  src={normalizeDriveUrl(award.mediaUrl, 'award')}
+                  muted
+                  playsInline
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <img
+                  src={normalizeDriveUrl(award.mediaUrl, 'award')}
+                  alt={award.title}
+                  onError={(e) => handleImageError(e, 'award')}
+                  className="w-full h-full object-cover"
+                />
+              )}
               <span className="absolute top-2 end-2 px-2 py-0.5 rounded text-[10px] font-bold bg-[#D4AF37] text-black">
                 {award.year}
               </span>
               <span className="absolute top-2 start-2 px-2 py-0.5 rounded text-[10px] font-bold bg-black/70 text-white">
                 {award.company}
               </span>
+              {(award.mediaType === 'video' || award.mediaUrl.endsWith('.mp4')) && (
+                <span className="absolute bottom-2 start-2 px-2 py-0.5 rounded text-[10px] font-bold bg-[#C94C71] text-white">
+                  فيديو 🎬
+                </span>
+              )}
             </div>
 
             <div className="p-4 text-start">

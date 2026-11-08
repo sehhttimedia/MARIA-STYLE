@@ -52,15 +52,15 @@ import {
 } from '../lib/googleWorkspace';
 
 export const PERSISTENCE_KEYS = {
-  CMS: 'maria_style_cms_persisted_v2',
-  PRODUCTS: 'maria_style_products_persisted_v2',
-  AWARDS: 'maria_style_awards_persisted_v2',
-  MEMBERS: 'maria_style_members_persisted_v2',
-  LEADS: 'maria_style_leads_persisted_v2',
-  BOOKINGS: 'maria_style_bookings_persisted_v2',
-  SALES: 'maria_style_sales_persisted_v2',
-  MLM_FIELDS: 'maria_style_mlm_fields_persisted_v2',
-  BOOKING_FIELDS: 'maria_style_booking_fields_persisted_v2',
+  CMS: 'maria_style_cms_persisted_v4',
+  PRODUCTS: 'maria_style_products_persisted_v4',
+  AWARDS: 'maria_style_awards_persisted_v4',
+  MEMBERS: 'maria_style_members_persisted_v4',
+  LEADS: 'maria_style_leads_persisted_v4',
+  BOOKINGS: 'maria_style_bookings_persisted_v4',
+  SALES: 'maria_style_sales_persisted_v4',
+  MLM_FIELDS: 'maria_style_mlm_fields_persisted_v4',
+  BOOKING_FIELDS: 'maria_style_booking_fields_persisted_v4',
   ACTIVE_SHEET_ID: 'maria_style_active_sheet_id',
 };
 
@@ -365,7 +365,11 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         if (cmsSnap.exists() && isMounted) {
           const cloudCms = cmsSnap.data() as Partial<CMSContent>;
           setCms((prev) => {
-            const merged = { ...prev, ...cloudCms };
+            // Prioritize authentic photo over any stale unsplash URLs
+            const photo = (!cloudCms.madameFatimaPhoto || cloudCms.madameFatimaPhoto.includes('unsplash.com'))
+              ? '/assets/aistudio/Fatma_d3c946d4.jpeg'
+              : cloudCms.madameFatimaPhoto;
+            const merged = { ...prev, ...cloudCms, madameFatimaPhoto: photo };
             safeSaveToStorage(PERSISTENCE_KEYS.CMS, merged);
             return merged;
           });
@@ -381,7 +385,15 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
           prodSnap.forEach((docItem) => {
             cloudProducts.push({ id: docItem.id, ...(docItem.data() as Omit<Product, 'id'>) });
           });
-          if (cloudProducts.length > 0) {
+          // If Firestore contains old mock products (prod-1), upgrade to real products
+          const hasLegacyMock = cloudProducts.some((p) => p.id === 'prod-1' || p.id === 'prod-2');
+          if (hasLegacyMock || cloudProducts.length === 0) {
+            setProducts(initialProducts);
+            safeSaveToStorage(PERSISTENCE_KEYS.PRODUCTS, initialProducts);
+            initialProducts.forEach((p) => {
+              setDoc(doc(db, 'products', p.id), p).catch(() => {});
+            });
+          } else {
             setProducts(cloudProducts);
             safeSaveToStorage(PERSISTENCE_KEYS.PRODUCTS, cloudProducts);
           }
@@ -399,7 +411,15 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
           awardsSnap.forEach((docItem) => {
             cloudAwards.push({ id: docItem.id, ...(docItem.data() as Omit<AwardItem, 'id'>) });
           });
-          if (cloudAwards.length > 0) {
+          // If Firestore contains old image awards without videos, upgrade to authentic video awards
+          const hasLegacyMock = cloudAwards.some((a) => a.id === 'award-1' || a.id === 'award-2');
+          if (hasLegacyMock || cloudAwards.length === 0) {
+            setAwards(initialAwards);
+            safeSaveToStorage(PERSISTENCE_KEYS.AWARDS, initialAwards);
+            initialAwards.forEach((a) => {
+              setDoc(doc(db, 'awards', a.id), a).catch(() => {});
+            });
+          } else {
             setAwards(cloudAwards);
             safeSaveToStorage(PERSISTENCE_KEYS.AWARDS, cloudAwards);
           }
