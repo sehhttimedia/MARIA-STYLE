@@ -1,0 +1,28 @@
+[
+  {
+    "id": "book-1",
+    "clientName": "سارة عبد الرحمن",
+    "phone": "+905378899112",
+    "consultationType": "skincare",
+    "preferredDate": "2026-11-03",
+    "preferredTime": "15:00",
+    "notes": "أعاني من كلف وتصبغات بعد الولادة وأريد روتين طبيعي معتمد",
+    "status": "confirmed",
+    "adminNotes": "تم إرسال رابط الزوم وموعد المتابعة",
+    "createdAt": "2026-10-30T14:00:00.000Z",
+    "synced": true
+  },
+  {
+    "id": "book-2",
+    "clientName": "أريج القحطاني",
+    "phone": "+966551982736",
+    "consultationType": "business",
+    "preferredDate": "2026-11-04",
+    "preferredTime": "18:30",
+    "notes": "أود مناقشة خطة استثمار وبناء فريق Alialyna في المنطقة الشرقية",
+    "status": "pending",
+    "adminNotes": "بانتظار اتصال أولي هاتفي",
+    "createdAt": "2026-10-31T09:45:00.000Z",
+    "synced": true
+  }
+]

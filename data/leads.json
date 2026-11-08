@@ -1,0 +1,50 @@
+[
+  {
+    "id": "lead-1",
+    "fullName": "مريم الكردي",
+    "phone": "+905351239988",
+    "country": "تركيا",
+    "city": "إسطنبول - باشاك شهير",
+    "targetCompany": "Alialyna",
+    "experience": "beginner",
+    "availableHours": "3-4 ساعات يومياً",
+    "motivation": "أريد تحقيق دخل مستقل من المنزل لمساعدة أسرتي وبناء مشروعي الخاص",
+    "attributionCode": "MS-FATIMA",
+    "status": "registered",
+    "notes": "تم التواصل وإرسال حقيبة الانطلاقة الأولى، متفائلة جداً",
+    "createdAt": "2026-10-30T10:15:00.000Z",
+    "synced": true
+  },
+  {
+    "id": "lead-2",
+    "fullName": "هدى الشمري",
+    "phone": "+966541122334",
+    "country": "السعودية",
+    "city": "الرياض",
+    "targetCompany": "HomeLife",
+    "experience": "intermediate",
+    "availableHours": "5+ ساعات",
+    "motivation": "مهتمة بالمنتجات العضوية وعندي قاعدة معارف واسعة في مجتمع الأمهات",
+    "attributionCode": "MS-REEM26",
+    "status": "contacted",
+    "notes": "بانتظار تأكيد اختيار باقة البداية",
+    "createdAt": "2026-10-31T08:20:00.000Z",
+    "synced": true
+  },
+  {
+    "id": "lead-3",
+    "fullName": "Selin Demir",
+    "phone": "+905443322110",
+    "country": "Türkiye",
+    "city": "Bursa",
+    "targetCompany": "Alialyna",
+    "experience": "none",
+    "availableHours": "2-3 ساعات",
+    "motivation": "Ek gelir sağlamak ve kozmetik ürünlerini seviyorum",
+    "attributionCode": "MS-AYSE07",
+    "status": "new",
+    "notes": "Yeni başvuru",
+    "createdAt": "2026-10-31T12:00:00.000Z",
+    "synced": true
+  }
+]

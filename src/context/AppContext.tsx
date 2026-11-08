@@ -91,10 +91,18 @@ interface AppContextType {
   mlmLeads: MlmLead[];
   submitMlmLead: (data: Record<string, string>) => Promise<{ success: boolean; message: string; savedOffline?: boolean }>;
   updateLeadStatus: (id: string, status: MlmLead['status'], notes?: string) => Promise<void>;
+  updateMlmLead: (id: string, updated: Partial<MlmLead>) => Promise<void>;
+  deleteMlmLead: (id: string) => Promise<void>;
+  addManualLead: (lead: Omit<MlmLead, 'id' | 'createdAt' | 'synced'>) => Promise<void>;
 
   bookings: Booking[];
   submitBooking: (data: Record<string, string>) => Promise<{ success: boolean; message: string; savedOffline?: boolean }>;
   updateBookingStatus: (id: string, status: Booking['status'], adminNotes?: string) => Promise<void>;
+  updateBooking: (id: string, updated: Partial<Booking>) => Promise<void>;
+  deleteBooking: (id: string) => Promise<void>;
+  addManualBooking: (booking: Omit<Booking, 'id' | 'createdAt' | 'synced'>) => Promise<void>;
+
+  exportToCsv: (type: 'bookings' | 'leads') => void;
 
   sales: SaleAttribution[];
   createSale: (sale: Omit<SaleAttribution, 'id' | 'synced'>) => Promise<void>;
@@ -468,6 +476,99 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             setDoc(doc(db, 'mlm_members', m.id), m).catch(() => {});
           });
         }
+
+        // 7. Fetch MLM Leads from Site Server Files (/api/leads) and Firestore
+        try {
+          let serverLeads: MlmLead[] = [];
+          try {
+            const res = await fetch('/api/leads');
+            if (res.ok) {
+              const data = await res.json();
+              if (Array.isArray(data)) serverLeads = data;
+            }
+          } catch {
+            // Local fallback
+          }
+
+          let cloudLeads: MlmLead[] = [];
+          try {
+            const leadsSnap = await getDocs(collection(db, 'leads'));
+            if (!leadsSnap.empty) {
+              leadsSnap.forEach((docItem) => {
+                cloudLeads.push({ id: docItem.id, ...(docItem.data() as any) } as MlmLead);
+              });
+            }
+          } catch {
+            // Rules or offline fallback
+          }
+
+          const combinedLeadsMap = new Map<string, MlmLead>();
+          initialMlmLeads.forEach((l) => combinedLeadsMap.set(l.id, l));
+          // Load cached leads from local storage if any
+          const cachedLeads = safeLoadFromStorage<MlmLead[]>(PERSISTENCE_KEYS.LEADS, []);
+          if (Array.isArray(cachedLeads)) {
+            cachedLeads.forEach((l) => combinedLeadsMap.set(l.id, l));
+          }
+          cloudLeads.forEach((l) => combinedLeadsMap.set(l.id, l));
+          serverLeads.forEach((l) => combinedLeadsMap.set(l.id, l));
+
+          const mergedLeads = Array.from(combinedLeadsMap.values()).sort(
+            (a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()
+          );
+
+          if (isMounted && mergedLeads.length > 0) {
+            setMlmLeads(mergedLeads);
+            safeSaveToStorage(PERSISTENCE_KEYS.LEADS, mergedLeads);
+          }
+        } catch (leadsErr) {
+          console.warn('Leads hydration notice:', leadsErr);
+        }
+
+        // 8. Fetch Bookings from Site Server Files (/api/bookings) and Firestore
+        try {
+          let serverBookings: Booking[] = [];
+          try {
+            const res = await fetch('/api/bookings');
+            if (res.ok) {
+              const data = await res.json();
+              if (Array.isArray(data)) serverBookings = data;
+            }
+          } catch {
+            // Local fallback
+          }
+
+          let cloudBookings: Booking[] = [];
+          try {
+            const booksSnap = await getDocs(collection(db, 'bookings'));
+            if (!booksSnap.empty) {
+              booksSnap.forEach((docItem) => {
+                cloudBookings.push({ id: docItem.id, ...(docItem.data() as any) } as Booking);
+              });
+            }
+          } catch {
+            // Rules or offline fallback
+          }
+
+          const combinedBooksMap = new Map<string, Booking>();
+          initialBookings.forEach((b) => combinedBooksMap.set(b.id, b));
+          const cachedBooks = safeLoadFromStorage<Booking[]>(PERSISTENCE_KEYS.BOOKINGS, []);
+          if (Array.isArray(cachedBooks)) {
+            cachedBooks.forEach((b) => combinedBooksMap.set(b.id, b));
+          }
+          cloudBookings.forEach((b) => combinedBooksMap.set(b.id, b));
+          serverBookings.forEach((b) => combinedBooksMap.set(b.id, b));
+
+          const mergedBookings = Array.from(combinedBooksMap.values()).sort(
+            (a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()
+          );
+
+          if (isMounted && mergedBookings.length > 0) {
+            setBookings(mergedBookings);
+            safeSaveToStorage(PERSISTENCE_KEYS.BOOKINGS, mergedBookings);
+          }
+        } catch (booksErr) {
+          console.warn('Bookings hydration notice:', booksErr);
+        }
       } catch (err) {
         console.info('Cloud hydration notice: Running in resilient offline-first mode.');
       }
@@ -735,6 +836,17 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       return nextLeads;
     });
 
+    // Save directly to site server file storage (/api/leads)
+    try {
+      fetch('/api/leads', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newLead),
+      }).catch(() => {});
+    } catch {
+      // Non-blocking
+    }
+
     fireConfetti();
 
     // 2. Attempt Google Sheet direct API append if connected, with dynamic headers and column mapping
@@ -804,6 +916,17 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       safeSaveToStorage(PERSISTENCE_KEYS.BOOKINGS, nextBookings);
       return nextBookings;
     });
+
+    // Save directly to site server file storage (/api/bookings)
+    try {
+      fetch('/api/bookings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newBooking),
+      }).catch(() => {});
+    } catch {
+      // Non-blocking
+    }
 
     fireConfetti();
 
@@ -1032,39 +1155,262 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   };
 
   /**
-   * Lead Status Update
+   * Lead Status Update (Backwards-compatible)
    */
   const updateLeadStatus = async (id: string, status: MlmLead['status'], notes?: string) => {
+    await updateMlmLead(id, { status, ...(notes !== undefined ? { notes } : {}) });
+  };
+
+  /**
+   * Comprehensive Full Update for MLM Lead (All fields, server file + Firestore + cache)
+   */
+  const updateMlmLead = async (id: string, updated: Partial<MlmLead>) => {
     setMlmLeads((prev) => {
-      const nextLeads = prev.map((l) => (l.id === id ? { ...l, status, notes: notes !== undefined ? notes : l.notes } : l));
+      const nextLeads = prev.map((l) => (l.id === id ? { ...l, ...updated } : l));
       safeSaveToStorage(PERSISTENCE_KEYS.LEADS, nextLeads);
       return nextLeads;
     });
 
+    // 1. Update in site server file storage (/api/leads/:id)
     try {
-      await setDoc(doc(db, 'leads', id), { status, ...(notes !== undefined ? { notes } : {}) }, { merge: true });
+      fetch(`/api/leads/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updated),
+      }).catch(() => {});
+    } catch {
+      // Non-blocking
+    }
+
+    // 2. Update in Firestore
+    try {
+      await setDoc(doc(db, 'leads', id), updated, { merge: true });
     } catch (err) {
-      console.warn('Firestore updateLeadStatus notice:', err);
+      console.warn('Firestore updateMlmLead notice:', err);
     }
   };
 
   /**
-   * Booking Status Update
+   * Delete MLM Lead
+   */
+  const deleteMlmLead = async (id: string) => {
+    setMlmLeads((prev) => {
+      const nextLeads = prev.filter((l) => l.id !== id);
+      safeSaveToStorage(PERSISTENCE_KEYS.LEADS, nextLeads);
+      return nextLeads;
+    });
+
+    // 1. Delete from site server file storage
+    try {
+      fetch(`/api/leads/${id}`, { method: 'DELETE' }).catch(() => {});
+    } catch {
+      // Non-blocking
+    }
+
+    // 2. Delete from Firestore
+    try {
+      await deleteDoc(doc(db, 'leads', id));
+    } catch (err) {
+      console.warn('Firestore deleteMlmLead notice:', err);
+    }
+  };
+
+  /**
+   * Manually add an MLM Lead from the Admin Dashboard
+   */
+  const addManualLead = async (data: Omit<MlmLead, 'id' | 'createdAt' | 'synced'>) => {
+    const newLead: MlmLead = {
+      ...data,
+      id: `lead-manual-${Date.now()}`,
+      createdAt: new Date().toISOString(),
+      synced: true,
+    } as MlmLead;
+
+    setMlmLeads((prev) => {
+      const nextLeads = [newLead, ...prev];
+      safeSaveToStorage(PERSISTENCE_KEYS.LEADS, nextLeads);
+      return nextLeads;
+    });
+
+    // 1. Save to site server files
+    try {
+      fetch('/api/leads', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newLead),
+      }).catch(() => {});
+    } catch {
+      // Non-blocking
+    }
+
+    // 2. Save to Firestore
+    try {
+      await setDoc(doc(db, 'leads', newLead.id), newLead);
+    } catch (err) {
+      console.warn('Firestore addManualLead notice:', err);
+    }
+
+    fireConfetti();
+  };
+
+  /**
+   * Booking Status Update (Backwards-compatible)
    */
   const updateBookingStatus = async (id: string, status: Booking['status'], adminNotes?: string) => {
+    await updateBooking(id, { status, ...(adminNotes !== undefined ? { adminNotes } : {}) });
+  };
+
+  /**
+   * Comprehensive Full Update for Consultation Booking (All fields, server file + Firestore + cache)
+   */
+  const updateBooking = async (id: string, updated: Partial<Booking>) => {
     setBookings((prev) => {
-      const nextBookings = prev.map((b) =>
-        b.id === id ? { ...b, status, adminNotes: adminNotes !== undefined ? adminNotes : b.adminNotes } : b
-      );
+      const nextBookings = prev.map((b) => (b.id === id ? { ...b, ...updated } : b));
       safeSaveToStorage(PERSISTENCE_KEYS.BOOKINGS, nextBookings);
       return nextBookings;
     });
 
+    // 1. Update in site server file storage (/api/bookings/:id)
     try {
-      await setDoc(doc(db, 'bookings', id), { status, ...(adminNotes !== undefined ? { adminNotes } : {}) }, { merge: true });
-    } catch (err) {
-      console.warn('Firestore updateBookingStatus notice:', err);
+      fetch(`/api/bookings/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updated),
+      }).catch(() => {});
+    } catch {
+      // Non-blocking
     }
+
+    // 2. Update in Firestore
+    try {
+      await setDoc(doc(db, 'bookings', id), updated, { merge: true });
+    } catch (err) {
+      console.warn('Firestore updateBooking notice:', err);
+    }
+  };
+
+  /**
+   * Delete Consultation Booking
+   */
+  const deleteBooking = async (id: string) => {
+    setBookings((prev) => {
+      const nextBookings = prev.filter((b) => b.id !== id);
+      safeSaveToStorage(PERSISTENCE_KEYS.BOOKINGS, nextBookings);
+      return nextBookings;
+    });
+
+    // 1. Delete from site server file storage
+    try {
+      fetch(`/api/bookings/${id}`, { method: 'DELETE' }).catch(() => {});
+    } catch {
+      // Non-blocking
+    }
+
+    // 2. Delete from Firestore
+    try {
+      await deleteDoc(doc(db, 'bookings', id));
+    } catch (err) {
+      console.warn('Firestore deleteBooking notice:', err);
+    }
+  };
+
+  /**
+   * Manually add a Consultation Booking from the Admin Dashboard
+   */
+  const addManualBooking = async (data: Omit<Booking, 'id' | 'createdAt' | 'synced'>) => {
+    const newBooking: Booking = {
+      ...data,
+      id: `book-manual-${Date.now()}`,
+      createdAt: new Date().toISOString(),
+      synced: true,
+    } as Booking;
+
+    setBookings((prev) => {
+      const nextBookings = [newBooking, ...prev];
+      safeSaveToStorage(PERSISTENCE_KEYS.BOOKINGS, nextBookings);
+      return nextBookings;
+    });
+
+    // 1. Save to site server files
+    try {
+      fetch('/api/bookings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newBooking),
+      }).catch(() => {});
+    } catch {
+      // Non-blocking
+    }
+
+    // 2. Save to Firestore
+    try {
+      await setDoc(doc(db, 'bookings', newBooking.id), newBooking);
+    } catch (err) {
+      console.warn('Firestore addManualBooking notice:', err);
+    }
+
+    fireConfetti();
+  };
+
+  /**
+   * Export Bookings or Leads to CSV with UTF-8 BOM for Arabic Excel Support
+   */
+  const exportToCsv = (type: 'bookings' | 'leads') => {
+    let csvContent = '\uFEFF'; // UTF-8 BOM
+    let filename = '';
+
+    if (type === 'bookings') {
+      filename = `maria_style_bookings_${new Date().toISOString().slice(0, 10)}.csv`;
+      const headers = ['معرف الحجز', 'اسم العميلة', 'الهاتف', 'نوع الاستشارة', 'التاريخ المفضل', 'التوقيت المفضل', 'الحالة', 'ملاحظات العميلة', 'ملاحظات ومتابعة الإدارة', 'تاريخ التسجيل'];
+      csvContent += headers.map((h) => `"${h}"`).join(',') + '\n';
+      bookings.forEach((b) => {
+        const row = [
+          b.id,
+          b.clientName,
+          b.phone,
+          b.consultationType,
+          b.preferredDate,
+          b.preferredTime,
+          b.status,
+          b.notes || '',
+          b.adminNotes || '',
+          b.createdAt,
+        ];
+        csvContent += row.map((cell) => `"${String(cell || '').replace(/"/g, '""')}"`).join(',') + '\n';
+      });
+    } else {
+      filename = `maria_style_mlm_leads_${new Date().toISOString().slice(0, 10)}.csv`;
+      const headers = ['معرف الطلب', 'الاسم الكامل', 'الهاتف', 'الدولة', 'المدينة', 'الشركة المطلوبة', 'الخبرة', 'ساعات العمل', 'الدافع', 'كود الداعية', 'الحالة', 'ملاحظات المشرف', 'تاريخ التسجيل'];
+      csvContent += headers.map((h) => `"${h}"`).join(',') + '\n';
+      mlmLeads.forEach((l) => {
+        const row = [
+          l.id,
+          l.fullName,
+          l.phone,
+          l.country,
+          l.city,
+          l.targetCompany,
+          l.experience,
+          l.availableHours,
+          l.motivation,
+          l.attributionCode,
+          l.status,
+          l.notes || '',
+          l.createdAt,
+        ];
+        csvContent += row.map((cell) => `"${String(cell || '').replace(/"/g, '""')}"`).join(',') + '\n';
+      });
+    }
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', filename);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   };
 
   /**
@@ -1428,9 +1774,16 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         mlmLeads,
         submitMlmLead,
         updateLeadStatus,
+        updateMlmLead,
+        deleteMlmLead,
+        addManualLead,
         bookings,
         submitBooking,
         updateBookingStatus,
+        updateBooking,
+        deleteBooking,
+        addManualBooking,
+        exportToCsv,
         sales,
         createSale,
         awards,
