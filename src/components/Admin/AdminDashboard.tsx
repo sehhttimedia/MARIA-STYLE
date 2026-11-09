@@ -18,22 +18,34 @@ import {
   LogOut,
   X,
   ExternalLink,
+  UserCheck,
 } from 'lucide-react';
 
 export const AdminDashboard: React.FC<{ onClose: () => void }> = ({ onClose }) => {
-  const { logoutAdmin, cms } = useApp();
+  const { logoutAdmin, cms, mlmLeads, bookings } = useApp();
   const [activeTab, setActiveTab] = useState<
-    'overview' | 'products' | 'mlm' | 'bookings' | 'forms' | 'awards' | 'cms'
+    'overview' | 'leads' | 'bookings' | 'products' | 'mlm' | 'forms' | 'awards' | 'cms'
   >('overview');
 
   const menuItems = [
     { id: 'overview', label: '1. الملخص التنفيذي', icon: LayoutDashboard },
-    { id: 'products', label: '2. إدارة المنتجات', icon: Package },
-    { id: 'mlm', label: '3. فريق MLM وتتبع المبيعات', icon: Users },
-    { id: 'bookings', label: '4. حجوزات الاستشارات', icon: Calendar },
-    { id: 'forms', label: '5. مخصص النماذج', icon: Sliders },
-    { id: 'awards', label: '6. التكريمات والجوائز', icon: Trophy },
-    { id: 'cms', label: '7. منشئ المحتوى CMS والإعدادات', icon: SlidersHorizontal },
+    {
+      id: 'leads',
+      label: '2. طلبات الانضمام MLM',
+      icon: UserCheck,
+      badge: mlmLeads.length,
+    },
+    {
+      id: 'bookings',
+      label: '3. حجوزات الاستشارات',
+      icon: Calendar,
+      badge: bookings.length,
+    },
+    { id: 'products', label: '4. إدارة المنتجات', icon: Package },
+    { id: 'mlm', label: '5. فريق العضوات والمبيعات', icon: Users },
+    { id: 'forms', label: '6. مخصص النماذج', icon: Sliders },
+    { id: 'awards', label: '7. التكريمات والجوائز', icon: Trophy },
+    { id: 'cms', label: '8. منشئ المحتوى CMS والإعدادات', icon: SlidersHorizontal },
   ];
 
   return (
@@ -67,14 +79,27 @@ export const AdminDashboard: React.FC<{ onClose: () => void }> = ({ onClose }) =
                 <button
                   key={item.id}
                   onClick={() => setActiveTab(item.id as typeof activeTab)}
-                  className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-start transition-all ${
+                  className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold text-start transition-all cursor-pointer ${
                     isActive
                       ? 'bg-gradient-to-r from-[#C94C71] to-[#D4AF37] text-white shadow-md'
                       : 'text-[#5A524A] dark:text-[#C5B7A9] hover:bg-black/5 dark:hover:bg-white/5'
                   }`}
                 >
-                  <Icon className="w-4 h-4 shrink-0" />
-                  <span className="line-clamp-1">{item.label}</span>
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <Icon className="w-4 h-4 shrink-0" />
+                    <span className="line-clamp-1">{item.label}</span>
+                  </div>
+                  {item.badge !== undefined && (
+                    <span
+                      className={`text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0 ${
+                        isActive
+                          ? 'bg-white/25 text-white'
+                          : 'bg-[#C94C71]/15 text-[#C94C71] dark:bg-[#C94C71]/30 dark:text-[#FFAEC7]'
+                      }`}
+                    >
+                      {item.badge}
+                    </span>
+                  )}
                 </button>
               );
             })}
@@ -113,9 +138,10 @@ export const AdminDashboard: React.FC<{ onClose: () => void }> = ({ onClose }) =
       {/* Main Tab Content Area */}
       <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 bg-white/70 dark:bg-[#1A1518]/70">
         {activeTab === 'overview' && <OverviewTab />}
-        {activeTab === 'products' && <ProductsTab />}
-        {activeTab === 'mlm' && <MlmTrackerTab />}
+        {activeTab === 'leads' && <MlmTrackerTab initialSubTab="leads" />}
         {activeTab === 'bookings' && <BookingsTab />}
+        {activeTab === 'products' && <ProductsTab />}
+        {activeTab === 'mlm' && <MlmTrackerTab initialSubTab="members" />}
         {activeTab === 'forms' && <FormsCustomizerTab />}
         {activeTab === 'awards' && <AwardsTab />}
         {activeTab === 'cms' && <VisualCmsTab />}

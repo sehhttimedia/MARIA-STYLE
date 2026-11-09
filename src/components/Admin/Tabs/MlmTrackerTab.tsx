@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useApp } from '../../../context/AppContext';
 import { MlmMember, MlmLead } from '../../../types';
 import {
@@ -20,7 +20,11 @@ import {
   FolderSync,
 } from 'lucide-react';
 
-export const MlmTrackerTab: React.FC = () => {
+interface MlmTrackerTabProps {
+  initialSubTab?: 'members' | 'leads' | 'sales';
+}
+
+export const MlmTrackerTab: React.FC<MlmTrackerTabProps> = ({ initialSubTab = 'members' }) => {
   const {
     mlmMembers,
     addMlmMember,
@@ -33,7 +37,13 @@ export const MlmTrackerTab: React.FC = () => {
     exportToCsv,
     sales,
   } = useApp();
-  const [activeSubTab, setActiveSubTab] = useState<'members' | 'leads' | 'sales'>('members');
+  const [activeSubTab, setActiveSubTab] = useState<'members' | 'leads' | 'sales'>(initialSubTab);
+
+  useEffect(() => {
+    if (initialSubTab) {
+      setActiveSubTab(initialSubTab);
+    }
+  }, [initialSubTab]);
   const [search, setSearch] = useState('');
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);

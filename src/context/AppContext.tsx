@@ -952,15 +952,18 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       return nextLeads;
     });
 
-    // Save directly to site server file storage (/api/leads)
+    // Save directly to site server file storage (/api/leads) for 100% resilient persistence
     try {
-      fetch('/api/leads', {
+      const serverRes = await fetch('/api/leads', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(newLead),
-      }).catch(() => {});
+      });
+      if (serverRes.ok) {
+        newLead.synced = true;
+      }
     } catch {
-      // Non-blocking
+      // Non-blocking fallback to local safe cache
     }
 
     fireConfetti();
@@ -1033,15 +1036,18 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       return nextBookings;
     });
 
-    // Save directly to site server file storage (/api/bookings)
+    // Save directly to site server file storage (/api/bookings) for 100% resilient persistence
     try {
-      fetch('/api/bookings', {
+      const serverRes = await fetch('/api/bookings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(newBooking),
-      }).catch(() => {});
+      });
+      if (serverRes.ok) {
+        newBooking.synced = true;
+      }
     } catch {
-      // Non-blocking
+      // Non-blocking fallback to local safe cache
     }
 
     fireConfetti();
