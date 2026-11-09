@@ -1,0 +1,58 @@
+[
+  {
+    "id": "mem-1",
+    "memberCode": "MS-FATIMA",
+    "name": "مدام فاطمة (المؤسسة)",
+    "phone": "+905528889900",
+    "email": "fatima@mariastyle.vip",
+    "company": "Alialyna",
+    "rank": "Diamond Executive Leader",
+    "joinedDate": "2023-01-15",
+    "totalSales": 185000,
+    "totalOrders": 342,
+    "totalCommission": 37000,
+    "status": "top_performer"
+  },
+  {
+    "id": "mem-2",
+    "memberCode": "MS-NOOR88",
+    "name": "نور الهدى إبراهيم",
+    "phone": "+905312345678",
+    "email": "nour.h@gmail.com",
+    "company": "Alialyna",
+    "rank": "Ruby Director",
+    "joinedDate": "2024-03-10",
+    "totalSales": 54200,
+    "totalOrders": 112,
+    "totalCommission": 10840,
+    "status": "top_performer"
+  },
+  {
+    "id": "mem-3",
+    "memberCode": "MS-REEM26",
+    "name": "ريم العتيبي",
+    "phone": "+966509876543",
+    "email": "reem.mlm@gmail.com",
+    "company": "HomeLife",
+    "rank": "Emerald Leader",
+    "joinedDate": "2024-06-20",
+    "totalSales": 41800,
+    "totalOrders": 89,
+    "totalCommission": 8360,
+    "status": "active"
+  },
+  {
+    "id": "mem-4",
+    "memberCode": "MS-AYSE07",
+    "name": "Ayşe Yılmaz",
+    "phone": "+905389871122",
+    "email": "ayse.yilmaz@outlook.com",
+    "company": "HomeLife",
+    "rank": "Sapphire Manager",
+    "joinedDate": "2025-01-08",
+    "totalSales": 29400,
+    "totalOrders": 64,
+    "totalCommission": 5880,
+    "status": "active"
+  }
+]

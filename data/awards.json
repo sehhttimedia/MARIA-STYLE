@@ -1,0 +1,35 @@
+[
+  {
+    "id": "award-video-1",
+    "title": "حفل تتويج وتكريم C2 في مخيم القيادة - Homm Life",
+    "titleTr": "Homm Life C2 Seviye Kampı Liderlik ve Başarı Ödülü",
+    "titleEn": "Homm Life C2 Leadership & Empowerment Grand Trophy Gala",
+    "year": "2025",
+    "company": "HomeLife",
+    "mediaType": "video",
+    "mediaUrl": "/assets/aistudio/1_17668614.mp4",
+    "description": "لحظة تاريخية لاعتلاء مدام فاطمة مسرح التتويج في مؤتمر C2، تكريماً لتحقيق أعلى رتبة قيادية وبناء أضخم شبكة نسائية مستقلة تحقق أرقاماً قياسية."
+  },
+  {
+    "id": "award-video-2",
+    "title": "شايلة جائزتي بإيدي... وفخورة بكل لحظة تعب وصلتني لهون",
+    "titleTr": "Homm Life Vellona Kırmızı Halı Başarı ve Zirve Ödülü",
+    "titleEn": "Homm Life Vellona Red Carpet Excellence & Leadership Trophy",
+    "year": "2025",
+    "company": "HomeLife",
+    "mediaType": "video",
+    "mediaUrl": "/assets/aistudio/2_ee3d9992.mp4",
+    "description": "تتويج رسمي ورفع كأس النجاح على السجادة الحمراء في حفل Homm Life Vellona الفاخر، تجسيداً لإرادة المرأة السورية والعربية في تحقيق الاستقلال المالي والقمة."
+  },
+  {
+    "id": "award-video-3",
+    "title": "تتويج النجوم (Birlikte İz Bırak) ورفع راية الفخر في إسطنبول",
+    "titleTr": "Homm Life 1likte İz Bırak Zirvesi ve Şampiyonluk Kupası",
+    "titleEn": "Homm Life \"Leave Your Mark Together\" Championship Trophy Ceremony",
+    "year": "2024",
+    "company": "HomeLife",
+    "mediaType": "video",
+    "mediaUrl": "/assets/aistudio/3_688bed76.mp4",
+    "description": "حفل استلام كؤوس الصدارة ودرع التميز الأول تحت شعار \"اترك أثراً معاً\" بحضور آلاف الحضور وكبار قادة التسويق الشبكي في تركيا والعالم العربي."
+  }
+]

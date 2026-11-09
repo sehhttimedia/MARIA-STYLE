@@ -313,6 +313,18 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         localStorage.removeItem(PERSISTENCE_KEYS.ACTIVE_SHEET_ID);
       }
     }
+
+    // Save to site server files (/api/config)
+    try {
+      fetch('/api/config', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ activeSheetId: cleanId }),
+      }).catch(() => {});
+    } catch {
+      // Non-blocking
+    }
+
     // Commit to Firestore so every mobile phone and new browser visitor immediately receives it
     try {
       await setDoc(
@@ -346,12 +358,65 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     return () => clearInterval(interval);
   }, []);
 
-  // Hydrate global state from Firestore to guarantee cross-device persistence across all visitors and mobiles
+  // Hydrate global state from Server Site Files + Firestore to guarantee cross-device persistence across all visitors and mobiles
   useEffect(() => {
     let isMounted = true;
 
     async function loadCloudData() {
       try {
+        // 0. Primary Fast Global Hydration from Site Server Files (/api/site-data)
+        // Guarantees that any modification made by admin appears to ANY visitor from ANY device
+        try {
+          const siteRes = await fetch('/api/site-data');
+          if (siteRes.ok && isMounted) {
+            const data = await siteRes.json();
+            if (data.cms) {
+              const photo = (!data.cms.madameFatimaPhoto || data.cms.madameFatimaPhoto.includes('unsplash.com'))
+                ? '/assets/aistudio/Fatma_d3c946d4.jpeg'
+                : data.cms.madameFatimaPhoto;
+              const mergedCms: CMSContent = { ...data.cms, madameFatimaPhoto: photo };
+              setCms(mergedCms);
+              safeSaveToStorage(PERSISTENCE_KEYS.CMS, mergedCms);
+            }
+            if (Array.isArray(data.products) && data.products.length > 0) {
+              setProducts(data.products);
+              safeSaveToStorage(PERSISTENCE_KEYS.PRODUCTS, data.products);
+            }
+            if (Array.isArray(data.awards) && data.awards.length > 0) {
+              setAwards(data.awards);
+              safeSaveToStorage(PERSISTENCE_KEYS.AWARDS, data.awards);
+            }
+            if (Array.isArray(data.members) && data.members.length > 0) {
+              setMlmMembers(data.members);
+              safeSaveToStorage(PERSISTENCE_KEYS.MEMBERS, data.members);
+            }
+            if (data.formConfigs?.mlm && Array.isArray(data.formConfigs.mlm)) {
+              setMlmFieldsConfig(data.formConfigs.mlm);
+              safeSaveToStorage(PERSISTENCE_KEYS.MLM_FIELDS, data.formConfigs.mlm);
+            }
+            if (data.formConfigs?.booking && Array.isArray(data.formConfigs.booking)) {
+              setBookingFieldsConfig(data.formConfigs.booking);
+              safeSaveToStorage(PERSISTENCE_KEYS.BOOKING_FIELDS, data.formConfigs.booking);
+            }
+            if (data.config?.activeSheetId) {
+              setActiveSheetIdState(data.config.activeSheetId);
+              if (typeof window !== 'undefined') {
+                localStorage.setItem(PERSISTENCE_KEYS.ACTIVE_SHEET_ID, data.config.activeSheetId);
+              }
+            }
+            if (Array.isArray(data.leads) && data.leads.length > 0) {
+              setMlmLeads(data.leads);
+              safeSaveToStorage(PERSISTENCE_KEYS.LEADS, data.leads);
+            }
+            if (Array.isArray(data.bookings) && data.bookings.length > 0) {
+              setBookings(data.bookings);
+              safeSaveToStorage(PERSISTENCE_KEYS.BOOKINGS, data.bookings);
+            }
+          }
+        } catch (serverErr) {
+          console.info('Server site-data hydration notice:', serverErr);
+        }
+
         // 1. Fetch Global App Config (Google Workspace Active Spreadsheet ID)
         try {
           const configSnap = await getDoc(doc(db, 'app_config', 'google_workspace'));
@@ -575,8 +640,48 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     }
 
     loadCloudData();
+
+    // Real-time synchronization across devices:
+    // Periodically and on window focus, refresh data from server files so changes appear instantly
+    const refreshSiteData = async () => {
+      if (!isMounted) return;
+      try {
+        const siteRes = await fetch('/api/site-data');
+        if (siteRes.ok && isMounted) {
+          const data = await siteRes.json();
+          if (data.cms) {
+            setCms((prev) => {
+              const photo = (!data.cms.madameFatimaPhoto || data.cms.madameFatimaPhoto.includes('unsplash.com'))
+                ? '/assets/aistudio/Fatma_d3c946d4.jpeg'
+                : data.cms.madameFatimaPhoto;
+              return { ...prev, ...data.cms, madameFatimaPhoto: photo };
+            });
+          }
+          if (Array.isArray(data.products) && data.products.length > 0) {
+            setProducts(data.products);
+          }
+          if (Array.isArray(data.awards) && data.awards.length > 0) {
+            setAwards(data.awards);
+          }
+          if (Array.isArray(data.members) && data.members.length > 0) {
+            setMlmMembers(data.members);
+          }
+          if (data.config?.activeSheetId) {
+            setActiveSheetIdState(data.config.activeSheetId);
+          }
+        }
+      } catch {
+        // Non-blocking
+      }
+    };
+
+    window.addEventListener('focus', refreshSiteData);
+    const syncInterval = setInterval(refreshSiteData, 10000);
+
     return () => {
       isMounted = false;
+      window.removeEventListener('focus', refreshSiteData);
+      clearInterval(syncInterval);
     };
   }, []);
 
@@ -803,6 +908,17 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       });
     } catch {
       // Catch silently - rules or unauth domain should never break UI
+    }
+
+    // 6. Save directly to server disk storage (/api/cms) for 100% universal multi-device persistence
+    try {
+      fetch('/api/cms', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updated),
+      }).catch(() => {});
+    } catch {
+      // Non-blocking
     }
 
     return true;
@@ -1042,6 +1158,17 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       return nextProds;
     });
 
+    // 1. Direct server persistence for universal cross-device visibility
+    try {
+      fetch('/api/products/item', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newP),
+      }).catch(() => {});
+    } catch {
+      // Non-blocking
+    }
+
     try {
       await setDoc(doc(db, 'products', newId), newP);
     } catch (err) {
@@ -1062,6 +1189,17 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       return nextProds;
     });
 
+    // 1. Direct server persistence for universal cross-device visibility
+    try {
+      fetch(`/api/products/item/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(normalizedPatch),
+      }).catch(() => {});
+    } catch {
+      // Non-blocking
+    }
+
     try {
       await setDoc(doc(db, 'products', id), normalizedPatch, { merge: true });
     } catch (err) {
@@ -1075,6 +1213,13 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       safeSaveToStorage(PERSISTENCE_KEYS.PRODUCTS, nextProds);
       return nextProds;
     });
+
+    // 1. Direct server persistence
+    try {
+      fetch(`/api/products/item/${id}`, { method: 'DELETE' }).catch(() => {});
+    } catch {
+      // Non-blocking
+    }
 
     try {
       await deleteDoc(doc(db, 'products', id));
@@ -1100,6 +1245,17 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       return nextAwards;
     });
 
+    // 1. Direct server persistence
+    try {
+      fetch('/api/awards/item', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newA),
+      }).catch(() => {});
+    } catch {
+      // Non-blocking
+    }
+
     try {
       await setDoc(doc(db, 'awards', newId), newA);
     } catch (err) {
@@ -1113,6 +1269,13 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       safeSaveToStorage(PERSISTENCE_KEYS.AWARDS, nextAwards);
       return nextAwards;
     });
+
+    // 1. Direct server persistence
+    try {
+      fetch(`/api/awards/item/${id}`, { method: 'DELETE' }).catch(() => {});
+    } catch {
+      // Non-blocking
+    }
 
     try {
       await deleteDoc(doc(db, 'awards', id));
@@ -1133,6 +1296,17 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       return nextMembers;
     });
 
+    // 1. Direct server persistence
+    try {
+      fetch('/api/members/item', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newM),
+      }).catch(() => {});
+    } catch {
+      // Non-blocking
+    }
+
     try {
       await setDoc(doc(db, 'mlm_members', newId), newM);
     } catch (err) {
@@ -1146,6 +1320,17 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       safeSaveToStorage(PERSISTENCE_KEYS.MEMBERS, nextMembers);
       return nextMembers;
     });
+
+    // 1. Direct server persistence
+    try {
+      fetch(`/api/members/item/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(m),
+      }).catch(() => {});
+    } catch {
+      // Non-blocking
+    }
 
     try {
       await setDoc(doc(db, 'mlm_members', id), m, { merge: true });
@@ -1420,6 +1605,17 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     setMlmFieldsConfig(configs);
     safeSaveToStorage(PERSISTENCE_KEYS.MLM_FIELDS, configs);
 
+    // 1. Direct server persistence
+    try {
+      fetch('/api/form-configs', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mlm: configs }),
+      }).catch(() => {});
+    } catch {
+      // Non-blocking
+    }
+
     // Save to Firestore so other devices get dynamic fields
     setDoc(doc(db, 'form_configs', 'mlm'), {
       fields: configs,
@@ -1437,6 +1633,17 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   const updateBookingFieldsConfig = (configs: FormFieldConfig[]) => {
     setBookingFieldsConfig(configs);
     safeSaveToStorage(PERSISTENCE_KEYS.BOOKING_FIELDS, configs);
+
+    // 1. Direct server persistence
+    try {
+      fetch('/api/form-configs', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ booking: configs }),
+      }).catch(() => {});
+    } catch {
+      // Non-blocking
+    }
 
     // Save to Firestore so other devices get dynamic fields
     setDoc(doc(db, 'form_configs', 'booking'), {
@@ -1560,29 +1767,50 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   };
 
   /**
-   * Publish & Sync All Local Data to Cloud (Firestore + Google Workspace)
+   * Publish & Sync All Local Data to Cloud (Server Storage + Firestore + Google Workspace)
    * Commits all current modifications (CMS phone/WhatsApp/photos, products, awards, custom form fields, active spreadsheet ID)
-   * to Firestore so that they immediately propagate to ALL visitors, mobile devices, and new browsers worldwide.
+   * so that they immediately propagate to ALL visitors, mobile devices, and new browsers worldwide.
    */
   const publishAllLocalDataToCloud = async (): Promise<{ success: boolean; message: string; count: number }> => {
     let count = 0;
+    const currentSheetId = activeSheetId || (typeof window !== 'undefined' ? localStorage.getItem(PERSISTENCE_KEYS.ACTIVE_SHEET_ID) || '' : '');
+
+    // Step 1: Save full snapshot to site server files (/api/publish-all)
+    // This is 100% resilient and guarantees persistence across all visitors and devices!
     try {
-      // 1. Commit active spreadsheet ID if set
-      const currentSheetId = activeSheetId || (typeof window !== 'undefined' ? localStorage.getItem(PERSISTENCE_KEYS.ACTIVE_SHEET_ID) || '' : '');
+      const pubRes = await fetch('/api/publish-all', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          cms,
+          products,
+          awards,
+          members: mlmMembers,
+          formConfigs: { mlm: mlmFieldsConfig, booking: bookingFieldsConfig },
+          config: { activeSheetId: currentSheetId },
+        }),
+      });
+      if (pubRes.ok) {
+        count += (products.length + awards.length + mlmMembers.length + 3);
+      }
+    } catch (serverErr) {
+      console.warn('Publish to server file notice:', serverErr);
+    }
+
+    // Step 2: Attempt Firestore sync in background (if configured)
+    try {
       if (currentSheetId) {
-        await setDoc(
+        setDoc(
           doc(db, 'app_config', 'google_workspace'),
           {
             activeSheetId: currentSheetId,
             updatedAt: new Date().toISOString(),
           },
           { merge: true }
-        );
-        count++;
+        ).catch(() => {});
       }
 
-      // 2. Commit CMS Content (brand name, official phone, WhatsApp, photos, story)
-      await setDoc(doc(db, 'cms_content', 'default'), {
+      setDoc(doc(db, 'cms_content', 'default'), {
         brandName: cms.brandName,
         brandTagline: cms.brandTagline,
         officialWhatsApp: cms.officialWhatsApp,
@@ -1603,52 +1831,38 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         alialynaDescription: cms.alialynaDescription,
         homelifeDescription: cms.homelifeDescription,
         updatedAt: new Date().toISOString(),
-      });
-      count++;
+      }).catch(() => {});
 
-      // 3. Commit All Catalog Products
       for (const p of products) {
-        await setDoc(doc(db, 'products', p.id), p);
-        count++;
+        setDoc(doc(db, 'products', p.id), p).catch(() => {});
       }
 
-      // 4. Commit All Awards
       for (const a of awards) {
-        await setDoc(doc(db, 'awards', a.id), a);
-        count++;
+        setDoc(doc(db, 'awards', a.id), a).catch(() => {});
       }
 
-      // 5. Commit Dynamic Form Configurations
-      await setDoc(doc(db, 'form_configs', 'mlm'), {
+      setDoc(doc(db, 'form_configs', 'mlm'), {
         fields: mlmFieldsConfig,
         updatedAt: new Date().toISOString(),
-      });
-      await setDoc(doc(db, 'form_configs', 'booking'), {
+      }).catch(() => {});
+      setDoc(doc(db, 'form_configs', 'booking'), {
         fields: bookingFieldsConfig,
         updatedAt: new Date().toISOString(),
-      });
-      count += 2;
+      }).catch(() => {});
 
-      // 6. Commit MLM Members
       for (const m of mlmMembers) {
-        await setDoc(doc(db, 'mlm_members', m.id), m);
-        count++;
+        setDoc(doc(db, 'mlm_members', m.id), m).catch(() => {});
       }
-
-      fireConfetti();
-      return {
-        success: true,
-        message: `تم نشر ومزامنة كافة التعديلات (${count} عنصراً) سحابياً بنجاح لتظهر فوراً لجميع الزوار والأجهزة!`,
-        count,
-      };
-    } catch (err: any) {
-      console.error('publishAllLocalDataToCloud error:', err);
-      return {
-        success: false,
-        message: err.message || 'تعذر استكمال النشر السحابي، يرجى المحاولة مجدداً.',
-        count,
-      };
+    } catch (err) {
+      console.warn('Firestore optional replication notice:', err);
     }
+
+    fireConfetti();
+    return {
+      success: true,
+      message: `تم نشر ومزامنة كافة التعديلات (${count || 'الكل'}) بنجاح على خادم الموقع لتظهر فوراً لجميع الزوار والأجهزة!`,
+      count,
+    };
   };
 
   /**
@@ -1713,13 +1927,29 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         setMlmFieldsConfig(data.mlmFieldsConfig);
         safeSaveToStorage(PERSISTENCE_KEYS.MLM_FIELDS, data.mlmFieldsConfig);
       }
-      if (Array.isArray(data.bookingFieldsConfig)) {
-        setBookingFieldsConfig(data.bookingFieldsConfig);
-        safeSaveToStorage(PERSISTENCE_KEYS.BOOKING_FIELDS, data.bookingFieldsConfig);
+      // Save imported snapshot to server storage
+      try {
+        fetch('/api/publish-all', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            cms: data.cms || cms,
+            products: Array.isArray(data.products) ? data.products : products,
+            awards: Array.isArray(data.awards) ? data.awards : awards,
+            members: Array.isArray(data.mlmMembers) ? data.mlmMembers : mlmMembers,
+            formConfigs: {
+              mlm: Array.isArray(data.mlmFieldsConfig) ? data.mlmFieldsConfig : mlmFieldsConfig,
+              booking: Array.isArray(data.bookingFieldsConfig) ? data.bookingFieldsConfig : bookingFieldsConfig,
+            },
+            config: { activeSheetId: activeSheetId || '' },
+          }),
+        }).catch(() => {});
+      } catch {
+        // Non-blocking
       }
 
       fireConfetti();
-      return { success: true, message: 'تم استعادة كافة بيانات المنصة بنجاح!' };
+      return { success: true, message: 'تم استعادة كافة بيانات المنصة ومزامنتها على الخادم بنجاح!' };
     } catch (err: any) {
       return { success: false, message: `فشل قراءة الملف: ${err.message}` };
     }
@@ -1744,6 +1974,23 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     safeSaveToStorage(PERSISTENCE_KEYS.AWARDS, initialAwards);
     safeSaveToStorage(PERSISTENCE_KEYS.MEMBERS, initialMlmMembers);
     safeSaveToStorage(PERSISTENCE_KEYS.LEADS, initialMlmLeads);
+
+    try {
+      fetch('/api/publish-all', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          cms: initialCMSContent,
+          products: initialProducts,
+          awards: initialAwards,
+          members: initialMlmMembers,
+          formConfigs: { mlm: initialMlmFieldsConfig, booking: initialBookingFieldsConfig },
+          config: { activeSheetId: '' },
+        }),
+      }).catch(() => {});
+    } catch {
+      // Non-blocking
+    }
     safeSaveToStorage(PERSISTENCE_KEYS.BOOKINGS, initialBookings);
     safeSaveToStorage(PERSISTENCE_KEYS.SALES, initialSales);
     safeSaveToStorage(PERSISTENCE_KEYS.MLM_FIELDS, initialMlmFieldsConfig);

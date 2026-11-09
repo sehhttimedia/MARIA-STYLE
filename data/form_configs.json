@@ -1,0 +1,21 @@
+{
+  "mlm": [
+    { "id": "f-name", "name": "fullName", "labelAr": "الاسم الكامل الثلاثي", "labelTr": "Adınız Soyadınız", "labelEn": "Full Name", "type": "text", "required": true, "enabled": true },
+    { "id": "f-phone", "name": "phone", "labelAr": "رقم الهاتف والواتساب", "labelTr": "Telefon & WhatsApp", "labelEn": "Phone Number", "type": "tel", "required": true, "enabled": true },
+    { "id": "f-country", "name": "country", "labelAr": "دولة الإقامة", "labelTr": "İkamet Ettiğiniz Ülke", "labelEn": "Country", "type": "text", "required": true, "enabled": true },
+    { "id": "f-city", "name": "city", "labelAr": "المدينة / المحافظة", "labelTr": "Şehir", "labelEn": "City", "type": "text", "required": true, "enabled": true },
+    { "id": "f-company", "name": "company", "labelAr": "الشركة المفضلة للبدء", "labelTr": "Başlamak İstediğiniz Şirket", "labelEn": "Preferred Company", "type": "select", "options": ["Alialyna (جمال وعطور)", "HomeLife (صحة وعناية منزلية)", "ساعدوني في الاختيار حسب طاقتي"], "required": true, "enabled": true },
+    { "id": "f-experience", "name": "experience", "labelAr": "خبرتكِ السابقة في التسويق", "labelTr": "Pazarlama Deneyimi", "labelEn": "Marketing Experience", "type": "select", "options": ["مبتدئة تماماً (أحتاج تدريباً من الصفر)", "متوسطة (لدي معارف وبدايات سابقة)", "خبيرة / قائدة سابقة"], "required": true, "enabled": true },
+    { "id": "f-hours", "name": "availableHours", "labelAr": "الساعات المتاحة يومياً", "labelTr": "Günlük Ayırabileceğiniz Süre", "labelEn": "Available Hours Daily", "type": "select", "options": ["1 - 2 ساعة", "3 - 4 ساعات", "5+ ساعات (دوام كامل)"], "required": true, "enabled": true },
+    { "id": "f-motivation", "name": "motivation", "labelAr": "هدفكِ المالي أو حلمكِ", "labelTr": "Hedefiniz", "labelEn": "Your Goal / Dream", "type": "textarea", "required": false, "enabled": true },
+    { "id": "f-attribution", "name": "attributionCode", "labelAr": "كود العضوة الداعية (إن وجد)", "labelTr": "Referans Kodu", "labelEn": "Sponsor Code", "type": "text", "required": false, "enabled": true }
+  ],
+  "booking": [
+    { "id": "b-name", "name": "clientName", "labelAr": "اسمكِ الكريم", "labelTr": "Adınız", "labelEn": "Full Name", "type": "text", "required": true, "enabled": true },
+    { "id": "b-phone", "name": "phone", "labelAr": "رقم الواتساب للتواصل وتأكيد الموعد", "labelTr": "WhatsApp Numaranız", "labelEn": "WhatsApp Phone", "type": "tel", "required": true, "enabled": true },
+    { "id": "b-type", "name": "consultationType", "labelAr": "موضوع الاستشارة المطلوب", "labelTr": "Danışmanlık Konusu", "labelEn": "Consultation Topic", "type": "select", "options": ["تحليل نوع البشرة واختيار المنتجات", "خطة الانضمام والاستثمار مع Alialyna", "خطة الانضمام والاستثمار مع HomeLife", "استشارة قيادية خاصة مع مدام فاطمة"], "required": true, "enabled": true },
+    { "id": "b-date", "name": "preferredDate", "labelAr": "التاريخ المناسب لكِ", "labelTr": "Tercih Edilen Tarih", "labelEn": "Preferred Date", "type": "text", "required": true, "enabled": true },
+    { "id": "b-time", "name": "preferredTime", "labelAr": "الوقت المفضل (بتوقيت إسطنبول/مكة)", "labelTr": "Tercih Edilen Saat", "labelEn": "Preferred Time", "type": "select", "options": ["12:00 ظهراً", "14:00 عصراً", "16:00 مساءً", "18:00 مساءً", "20:00 ليلاً", "21:30 ليلاً"], "required": true, "enabled": true },
+    { "id": "b-notes", "name": "notes", "labelAr": "أي استفسار محدد تودين طرحه؟", "labelTr": "Özel Notunuz", "labelEn": "Specific Questions", "type": "textarea", "required": false, "enabled": true }
+  ]
+}
