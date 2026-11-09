@@ -3,15 +3,21 @@ import { useApp } from '../../../context/AppContext';
 import { CMSContent } from '../../../types';
 import { normalizeDriveUrl, handleImageError } from '../../../utils/drive';
 import { GoogleMediaPickerModal } from '../GoogleMediaPickerModal';
-import { Settings, Save, Check, RefreshCw, Sparkles, MessageCircle, Link, Image as ImageIcon, ShieldCheck } from 'lucide-react';
+import { Settings, Save, Check, RefreshCw, Sparkles, MessageCircle, Link, Image as ImageIcon, ShieldCheck, Lock, Key } from 'lucide-react';
 
 export const VisualCmsTab: React.FC = () => {
-  const { cms, updateCMS } = useApp();
+  const { cms, updateCMS, changeAdminPassword } = useApp();
   const [form, setForm] = useState<CMSContent>({ ...cms });
   const [savedSuccess, setSavedSuccess] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isPickerOpen, setIsPickerOpen] = useState(false);
   const [pickerTarget, setPickerTarget] = useState<'logo' | 'story'>('logo');
+
+  // Password change state
+  const [oldPass, setOldPass] = useState('');
+  const [newPass, setNewPass] = useState('');
+  const [confirmPass, setConfirmPass] = useState('');
+  const [passMessage, setPassMessage] = useState<{ text: string; success: boolean } | null>(null);
 
   // Keep form updated if cms changes in context
   useEffect(() => {
@@ -33,23 +39,39 @@ export const VisualCmsTab: React.FC = () => {
     setTimeout(() => setSavedSuccess(false), 4000);
   };
 
+  const handlePasswordSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (newPass !== confirmPass) {
+      setPassMessage({ text: 'كلمة المرور الجديدة غير متطابقة مع التأكيد.', success: false });
+      return;
+    }
+    const res = changeAdminPassword(oldPass, newPass);
+    setPassMessage({ text: res.message, success: res.success });
+    if (res.success) {
+      setOldPass('');
+      setNewPass('');
+      setConfirmPass('');
+    }
+    setTimeout(() => setPassMessage(null), 5000);
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h3 className="text-lg font-bold text-[#2D2A26] dark:text-white font-serif-luxury">
-            منشئ المحتوى البصري والإعدادات العامة (مرتبط بالشيت 4 CMS_Content)
+            منشئ المحتوى البصري والإعدادات العامة للموقع
           </h3>
           <p className="text-xs text-gray-500">
-            تحديث النصوص الإعلانية، الشعار، صورة مدام فاطمة، السوشيال ميديا، ورقم الواتساب فورياً
+            تحديث الهوية، الشعار، صورة مدام فاطمة، السوشيال ميديا، ورقم الواتساب فورياً لجميع الزوار
           </p>
         </div>
 
         {savedSuccess && (
           <div className="px-4 py-2 rounded-xl bg-[#25D366]/20 border border-[#25D366] text-[#25D366] text-xs font-bold flex items-center gap-1.5 animate-in fade-in">
             <Check className="w-4 h-4" />
-            <span>تم حفظ التعديلات وإرسالها للشيت 4 بنجاح!</span>
+            <span>تم حفظ التعديلات ونشرها فوراً على الموقع لجميع الزوار!</span>
           </div>
         )}
       </div>
@@ -332,13 +354,90 @@ export const VisualCmsTab: React.FC = () => {
           <button
             type="submit"
             disabled={isSaving}
-            className="px-8 py-3 rounded-full text-sm font-bold text-white rose-gold-gradient shadow-lg hover:shadow-xl hover:scale-[1.02] flex items-center gap-2"
+            className="px-8 py-3 rounded-full text-sm font-bold text-white rose-gold-gradient shadow-lg hover:shadow-xl hover:scale-[1.02] flex items-center gap-2 cursor-pointer"
           >
             {isSaving ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-            <span>حفظ الإعدادات والمزامنة مع الشيت 4 (CMS_Content)</span>
+            <span>حفظ الإعدادات ونشرها فوراً على الموقع</span>
           </button>
         </div>
       </form>
+
+      {/* Section 5: Admin Password & Account Security */}
+      <div className="glass-luxury rounded-2xl border border-[#D4AF37]/30 p-6 shadow-md text-start text-xs space-y-4">
+        <div className="flex items-center gap-2 border-b border-[#D4AF37]/20 pb-3">
+          <Lock className="w-4 h-4 text-[#C94C71]" />
+          <div>
+            <h4 className="text-sm font-bold text-[#2D2A26] dark:text-white font-serif-luxury">
+              أمان الحساب وتغيير كلمة مرور المشرف
+            </h4>
+            <p className="text-[11px] text-gray-500">
+              تغيير كلمة المرور الخاصة بتسجيل الدخول إلى لوحة التحكم
+            </p>
+          </div>
+        </div>
+
+        {passMessage && (
+          <div
+            className={`p-3 rounded-xl text-xs font-semibold ${
+              passMessage.success
+                ? 'bg-emerald-500/15 border border-emerald-500/40 text-emerald-700 dark:text-emerald-400'
+                : 'bg-red-500/15 border border-red-500/40 text-red-700 dark:text-red-400'
+            }`}
+          >
+            {passMessage.text}
+          </div>
+        )}
+
+        <form onSubmit={handlePasswordSubmit} className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-end">
+          <div>
+            <label className="block font-semibold mb-1">كلمة المرور الحالية</label>
+            <input
+              type="password"
+              value={oldPass}
+              onChange={(e) => setOldPass(e.target.value)}
+              placeholder="••••••••"
+              required
+              className="w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-[#D4AF37]/25 bg-white dark:bg-[#120E11]"
+            />
+          </div>
+
+          <div>
+            <label className="block font-semibold mb-1">كلمة المرور الجديدة</label>
+            <input
+              type="password"
+              value={newPass}
+              onChange={(e) => setNewPass(e.target.value)}
+              placeholder="6 أحرف أو أرقام على الأقل"
+              required
+              minLength={6}
+              className="w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-[#D4AF37]/25 bg-white dark:bg-[#120E11]"
+            />
+          </div>
+
+          <div>
+            <label className="block font-semibold mb-1">تأكيد كلمة المرور الجديدة</label>
+            <input
+              type="password"
+              value={confirmPass}
+              onChange={(e) => setConfirmPass(e.target.value)}
+              placeholder="إعادة إدخال كلمة المرور"
+              required
+              minLength={6}
+              className="w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-[#D4AF37]/25 bg-white dark:bg-[#120E11]"
+            />
+          </div>
+
+          <div className="sm:col-span-3 flex justify-end pt-2">
+            <button
+              type="submit"
+              className="px-6 py-2.5 rounded-full text-xs font-bold text-white bg-gradient-to-r from-[#2D2A26] to-[#4A453F] dark:from-[#3D353A] dark:to-[#574B53] hover:opacity-90 flex items-center gap-1.5 cursor-pointer shadow-sm"
+            >
+              <Key className="w-3.5 h-3.5" />
+              <span>تحديث كلمة المرور</span>
+            </button>
+          </div>
+        </form>
+      </div>
 
       {/* Google Media Picker Modal */}
       <GoogleMediaPickerModal

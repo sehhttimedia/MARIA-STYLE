@@ -26,7 +26,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ product,
   const handleOrderWhatsApp = () => {
     const cleanPhone = cms.officialWhatsApp.replace(/[^0-9]/g, '');
     const totalPrice = product.price * quantity;
-    const message = `✨ طلب منتج جديد من منصة ماريا ستايل ✨\n\n- المنتج: ${product.name}\n- الشركة: ${product.companyOrigin}\n- الكمية: ${quantity}\n- الإجمالي: ${totalPrice} ${product.currency}\n- كود العضوة الراعية: ${activeAttribution || 'MS-FATIMA'}\n\nيرجى تأكيد توفر المنتج وتفاصيل الشحن والتوصيل. شكراً لكِ!`;
+    const message = `✨ طلب واستفسار عن منتج من منصة ماريا ستايل ✨\n\n- اسم المنتج: ${product.name}\n- الشركة التابعة: ${product.companyOrigin}\n- الكمية المطلوبة: ${quantity}\n- كود العضوة الراعية: ${activeAttribution || 'MS-FATIMA'}\n\nالسلام عليكم مدام فاطمة، أود تأكيد طلبي والحصول على تفاصيل السعر المخفض والعروض المتاحة مع الشحن والتوصيل. شكراً لكِ!`;
     
     // Automatically record sale attribution in background
     createSale({
@@ -133,16 +133,15 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ product,
                 </span>
               </div>
 
-              {/* Price */}
-              <div className="flex items-baseline gap-2 mb-4">
-                <span className="text-2xl font-black text-[#C94C71] font-serif-luxury">
-                  {product.price * quantity} {product.currency}
-                </span>
-                {quantity > 1 && (
-                  <span className="text-xs text-gray-500">
-                    ({product.price} {product.currency} للقطعة)
-                  </span>
-                )}
+              {/* Special Offer & Motivating Call to Action (Price removed for exclusive consultation) */}
+              <div className="p-3.5 rounded-2xl bg-gradient-to-r from-[#C94C71]/10 via-[#D4AF37]/15 to-[#25D366]/10 border border-[#D4AF37]/35 mb-4 text-start">
+                <div className="flex items-center gap-1.5 mb-1 text-[#C94C71] dark:text-[#E55B82] font-bold text-xs">
+                  <Sparkles className="w-3.5 h-3.5 text-[#D4AF37]" />
+                  <span>عروض حصرية وخاصة لعضوات وزوار ماريا ستايل</span>
+                </div>
+                <p className="text-xs text-[#2D2A26] dark:text-white font-medium leading-relaxed">
+                  تواصلِ معنا مباشرة عبر الواتساب للحصول على سعر العضوات المخفض، خصومات الباقات الملكية، وهدايا الشحن والتوصيل الفوري!
+                </p>
               </div>
 
               {/* Description */}

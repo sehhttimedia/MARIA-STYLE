@@ -42,7 +42,7 @@ export const StoreSection: React.FC = () => {
   const handleDirectWhatsAppOrder = (product: Product, e: React.MouseEvent) => {
     e.stopPropagation();
     const cleanPhone = cms.officialWhatsApp.replace(/[^0-9]/g, '');
-    const message = `✨ طلب منتج من متجر ماريا ستايل ✨\n\n- المنتج: ${product.name}\n- السعر: ${product.price} ${product.currency}\n- الشركة: ${product.companyOrigin}\n- كود العضوة الراعية: ${activeAttribution || 'MS-FATIMA'}\n\nيرجى تأكيد التوافر وطريقة الشحن والتوصيل. شكراً لكِ!`;
+    const message = `✨ استفسار وطلب منتج من متجر ماريا ستايل ✨\n\n- اسم المنتج: ${product.name}\n- الشركة التابعة: ${product.companyOrigin}\n- كود العضوة الراعية: ${activeAttribution || 'MS-FATIMA'}\n\nالسلام عليكم مدام فاطمة، أود الاستفسار عن تفاصيل هذا المنتج والعروض الحصرية المتاحة مع طريقة الشحن والطلب الفوري. شكراً لكِ!`;
 
     // Record sale attribution in background
     createSale({
@@ -207,21 +207,25 @@ export const StoreSection: React.FC = () => {
                       </p>
                     </div>
 
-                    {/* Bottom Price & Order CTA */}
-                    <div className="pt-4 border-t border-[#D4AF37]/20 flex items-center justify-between gap-2">
-                      <div className="flex flex-col">
-                        <span className="text-[10px] text-gray-400 dark:text-[#8C7E75]">السعر المميز</span>
-                        <span className="text-lg font-black text-[#C94C71] dark:text-[#E55B82] font-serif-luxury">
-                          {product.price} {product.currency}
+                    {/* Motivating Offer & Order Action (Price removed for exclusive member offer) */}
+                    <div className="pt-3.5 border-t border-[#D4AF37]/20 flex items-center justify-between gap-2">
+                      <div className="flex flex-col text-start">
+                        <span className="text-[10px] text-[#D4AF37] font-bold flex items-center gap-1">
+                          <Sparkles className="w-3 h-3 text-[#D4AF37]" />
+                          <span>عروض وهدايا حصرية</span>
+                        </span>
+                        <span className="text-xs font-bold text-[#C94C71] dark:text-[#E55B82]">
+                          تواصلي لطلب المنتج الآن
                         </span>
                       </div>
 
                       <button
                         onClick={(e) => handleDirectWhatsAppOrder(product, e)}
-                        className="px-4 py-2 rounded-full text-xs font-bold text-white bg-gradient-to-r from-[#25D366] to-[#128C7E] hover:opacity-95 shadow-md flex items-center gap-1.5 transition-all hover:scale-105"
+                        className="px-3.5 py-2 rounded-full text-xs font-bold text-white bg-gradient-to-r from-[#25D366] to-[#128C7E] hover:opacity-95 shadow-md flex items-center gap-1.5 transition-all hover:scale-105 shrink-0"
+                        title="تواصلي مباشرة مع مدام فاطمة للطلب الفوري والاستفسار عن العروض"
                       >
                         <MessageCircle className="w-3.5 h-3.5" />
-                        <span>طلب واتساب</span>
+                        <span>طلب عبر واتساب</span>
                       </button>
                     </div>
                   </div>

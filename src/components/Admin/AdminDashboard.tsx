@@ -7,8 +7,6 @@ import { BookingsTab } from './Tabs/BookingsTab';
 import { FormsCustomizerTab } from './Tabs/FormsCustomizerTab';
 import { AwardsTab } from './Tabs/AwardsTab';
 import { VisualCmsTab } from './Tabs/VisualCmsTab';
-import { SecuritySyncTab } from './Tabs/SecuritySyncTab';
-import { GoogleWorkspaceTab } from './Tabs/GoogleWorkspaceTab';
 import {
   LayoutDashboard,
   Package,
@@ -17,18 +15,15 @@ import {
   Sliders,
   Trophy,
   SlidersHorizontal,
-  ShieldCheck,
-  FileSpreadsheet,
   LogOut,
   X,
   ExternalLink,
 } from 'lucide-react';
 
 export const AdminDashboard: React.FC<{ onClose: () => void }> = ({ onClose }) => {
-  const { logoutAdmin, cms, publishAllLocalDataToCloud } = useApp();
-  const [isSyncingCloud, setIsSyncingCloud] = useState(false);
+  const { logoutAdmin, cms } = useApp();
   const [activeTab, setActiveTab] = useState<
-    'overview' | 'products' | 'mlm' | 'bookings' | 'forms' | 'awards' | 'cms' | 'security' | 'workspace'
+    'overview' | 'products' | 'mlm' | 'bookings' | 'forms' | 'awards' | 'cms'
   >('overview');
 
   const menuItems = [
@@ -38,9 +33,7 @@ export const AdminDashboard: React.FC<{ onClose: () => void }> = ({ onClose }) =
     { id: 'bookings', label: '4. حجوزات الاستشارات', icon: Calendar },
     { id: 'forms', label: '5. مخصص النماذج', icon: Sliders },
     { id: 'awards', label: '6. التكريمات والجوائز', icon: Trophy },
-    { id: 'cms', label: '7. منشئ المحتوى CMS', icon: SlidersHorizontal },
-    { id: 'security', label: '8. الأمان والمزامنة', icon: ShieldCheck },
-    { id: 'workspace', label: '9. تكامل Drive & Sheets', icon: FileSpreadsheet },
+    { id: 'cms', label: '7. منشئ المحتوى CMS والإعدادات', icon: SlidersHorizontal },
   ];
 
   return (
@@ -90,19 +83,10 @@ export const AdminDashboard: React.FC<{ onClose: () => void }> = ({ onClose }) =
 
         {/* Footer controls & Quick Cloud Sync */}
         <div className="pt-3 border-t border-[#D4AF37]/20 space-y-2.5">
-          <button
-            onClick={async () => {
-              setIsSyncingCloud(true);
-              await publishAllLocalDataToCloud();
-              setIsSyncingCloud(false);
-            }}
-            disabled={isSyncingCloud}
-            className="w-full flex items-center justify-center gap-1.5 py-2 px-2.5 rounded-xl text-[11px] font-bold text-white bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 shadow-sm transition-all cursor-pointer disabled:opacity-50"
-            title="نشر ومزامنة كافة التعديلات سحابياً لتظهر لجميع الزوار والأجهزة فوراً"
-          >
-            <ShieldCheck className={`w-3.5 h-3.5 ${isSyncingCloud ? 'animate-spin' : ''}`} />
-            <span>{isSyncingCloud ? 'جاري النشر السحابي...' : 'نشر التعديلات سحابياً ☁️'}</span>
-          </button>
+          <div className="flex items-center gap-2 p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-700 dark:text-emerald-400 text-[11px] font-bold">
+            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+            <span className="leading-tight">الحفظ والتعديل المباشر نشط على الموقع</span>
+          </div>
 
           <div className="flex items-center justify-between">
             <button
@@ -110,7 +94,7 @@ export const AdminDashboard: React.FC<{ onClose: () => void }> = ({ onClose }) =
                 logoutAdmin();
                 onClose();
               }}
-              className="flex items-center gap-1.5 text-xs text-red-500 hover:text-red-700 font-semibold"
+              className="flex items-center gap-1.5 text-xs text-red-500 hover:text-red-700 font-semibold cursor-pointer"
             >
               <LogOut className="w-3.5 h-3.5" />
               <span>تسجيل الخروج</span>
@@ -118,7 +102,7 @@ export const AdminDashboard: React.FC<{ onClose: () => void }> = ({ onClose }) =
 
             <button
               onClick={onClose}
-              className="px-2.5 py-1 text-xs rounded-lg border border-gray-300 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-black/5"
+              className="px-2.5 py-1 text-xs rounded-lg border border-gray-300 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-black/5 cursor-pointer"
             >
               عرض المتجر
             </button>
@@ -135,8 +119,6 @@ export const AdminDashboard: React.FC<{ onClose: () => void }> = ({ onClose }) =
         {activeTab === 'forms' && <FormsCustomizerTab />}
         {activeTab === 'awards' && <AwardsTab />}
         {activeTab === 'cms' && <VisualCmsTab />}
-        {activeTab === 'security' && <SecuritySyncTab />}
-        {activeTab === 'workspace' && <GoogleWorkspaceTab />}
       </main>
     </div>
   );

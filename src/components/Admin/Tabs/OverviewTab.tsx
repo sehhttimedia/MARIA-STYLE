@@ -95,30 +95,22 @@ export const OverviewTab: React.FC = () => {
 
   return (
     <div className="space-y-8">
-      {/* Top Bar with Sync Status */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 rounded-2xl bg-[#FAF5EE] dark:bg-white/5 border border-[#D4AF37]/30">
-        <div>
-          <h4 className="text-sm font-bold text-[#2D2A26] dark:text-white flex items-center gap-2">
-            <span>حالة المزامنة السحابية (Google Sheets 4-Sheets)</span>
-            <span
-              className={`w-2.5 h-2.5 rounded-full ${
-                syncStatus.success !== false ? 'bg-[#25D366] animate-pulse' : 'bg-red-500'
-              }`}
-            />
-          </h4>
-          <p className="text-xs text-[#7A6F65] dark:text-[#A8988B] mt-0.5">
-            {syncStatus.message}
-          </p>
+      {/* Top Bar with System Status */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 rounded-2xl bg-[#FAF5EE] dark:bg-white/5 border border-[#D4AF37]/30 text-start">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+            <Sparkles className="w-5 h-5" />
+          </div>
+          <div>
+            <h4 className="text-sm font-bold text-[#2D2A26] dark:text-white flex items-center gap-2">
+              <span>نظام التخزين المباشر على الموقع نشط</span>
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
+            </h4>
+            <p className="text-xs text-[#7A6F65] dark:text-[#A8988B] mt-0.5">
+              كافة التعديلات على المنتجات، الجوائز، نصوص وهوية الموقع، وحقول النماذج تُحفظ وتظهر فورياً لجميع الزوار والأجهزة.
+            </p>
+          </div>
         </div>
-
-        <button
-          onClick={syncAllWithWebhook}
-          disabled={syncStatus.isSyncing}
-          className="px-4 py-2 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-[#C94C71] to-[#D4AF37] hover:opacity-95 shadow-md flex items-center gap-2 shrink-0 disabled:opacity-60"
-        >
-          <RefreshCw className={`w-3.5 h-3.5 ${syncStatus.isSyncing ? 'animate-spin' : ''}`} />
-          <span>{syncStatus.isSyncing ? 'جاري المزامنة...' : 'SYNC NOW (مزامنة فورية)'}</span>
-        </button>
       </div>
 
       {/* KPI Stats Cards */}
