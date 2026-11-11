@@ -87,6 +87,7 @@ interface AppContextType {
   mlmMembers: MlmMember[];
   addMlmMember: (member: Omit<MlmMember, 'id'>) => Promise<void>;
   updateMlmMember: (id: string, member: Partial<MlmMember>) => Promise<void>;
+  deleteMlmMember: (id: string) => Promise<void>;
 
   mlmLeads: MlmLead[];
   submitMlmLead: (data: Record<string, string>) => Promise<{ success: boolean; message: string; savedOffline?: boolean }>;
@@ -451,56 +452,47 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
           setDoc(doc(db, 'cms_content', 'default'), initialCMSContent).catch(() => {});
         }
 
-        // 3. Fetch Products from Firestore
-        const prodSnap = await getDocs(collection(db, 'products'));
-        if (!prodSnap.empty && isMounted) {
-          const cloudProducts: Product[] = [];
-          prodSnap.forEach((docItem) => {
-            cloudProducts.push({ id: docItem.id, ...(docItem.data() as Omit<Product, 'id'>) });
-          });
-          // If Firestore contains old mock products (prod-1), upgrade to real products
-          const hasLegacyMock = cloudProducts.some((p) => p.id === 'prod-1' || p.id === 'prod-2');
-          if (hasLegacyMock || cloudProducts.length === 0) {
-            setProducts(initialProducts);
-            safeSaveToStorage(PERSISTENCE_KEYS.PRODUCTS, initialProducts);
-            initialProducts.forEach((p) => {
-              setDoc(doc(db, 'products', p.id), p).catch(() => {});
+        // 3. Optional Firestore Sync for Products (Never overwrite server disk data with stale defaults)
+        try {
+          const prodSnap = await getDocs(collection(db, 'products'));
+          if (!prodSnap.empty && isMounted) {
+            const cloudProducts: Product[] = [];
+            prodSnap.forEach((docItem) => {
+              cloudProducts.push({ id: docItem.id, ...(docItem.data() as Omit<Product, 'id'>) });
             });
-          } else {
-            setProducts(cloudProducts);
-            safeSaveToStorage(PERSISTENCE_KEYS.PRODUCTS, cloudProducts);
+            const hasLegacyMock = cloudProducts.some((p) => p.id === 'prod-1' || p.id === 'prod-2');
+            if (!hasLegacyMock && cloudProducts.length > 0) {
+              setProducts((current) => {
+                // If local/server has more or equal items, preserve current server products
+                if (current.length >= cloudProducts.length) return current;
+                safeSaveToStorage(PERSISTENCE_KEYS.PRODUCTS, cloudProducts);
+                return cloudProducts;
+              });
+            }
           }
-        } else if (prodSnap.empty && isMounted) {
-          // Seed initial products to Firestore
-          initialProducts.forEach((p) => {
-            setDoc(doc(db, 'products', p.id), p).catch(() => {});
-          });
+        } catch {
+          // Non-blocking Firestore notice
         }
 
-        // 4. Fetch Awards from Firestore
-        const awardsSnap = await getDocs(collection(db, 'awards'));
-        if (!awardsSnap.empty && isMounted) {
-          const cloudAwards: AwardItem[] = [];
-          awardsSnap.forEach((docItem) => {
-            cloudAwards.push({ id: docItem.id, ...(docItem.data() as Omit<AwardItem, 'id'>) });
-          });
-          // If Firestore contains old image awards without videos, upgrade to authentic video awards
-          const hasLegacyMock = cloudAwards.some((a) => a.id === 'award-1' || a.id === 'award-2');
-          if (hasLegacyMock || cloudAwards.length === 0) {
-            setAwards(initialAwards);
-            safeSaveToStorage(PERSISTENCE_KEYS.AWARDS, initialAwards);
-            initialAwards.forEach((a) => {
-              setDoc(doc(db, 'awards', a.id), a).catch(() => {});
+        // 4. Optional Firestore Sync for Awards (Never overwrite server disk data)
+        try {
+          const awardsSnap = await getDocs(collection(db, 'awards'));
+          if (!awardsSnap.empty && isMounted) {
+            const cloudAwards: AwardItem[] = [];
+            awardsSnap.forEach((docItem) => {
+              cloudAwards.push({ id: docItem.id, ...(docItem.data() as Omit<AwardItem, 'id'>) });
             });
-          } else {
-            setAwards(cloudAwards);
-            safeSaveToStorage(PERSISTENCE_KEYS.AWARDS, cloudAwards);
+            const hasLegacyMock = cloudAwards.some((a) => a.id === 'award-1' || a.id === 'award-2');
+            if (!hasLegacyMock && cloudAwards.length > 0) {
+              setAwards((current) => {
+                if (current.length >= cloudAwards.length) return current;
+                safeSaveToStorage(PERSISTENCE_KEYS.AWARDS, cloudAwards);
+                return cloudAwards;
+              });
+            }
           }
-        } else if (awardsSnap.empty && isMounted) {
-          // Seed initial awards to Firestore
-          initialAwards.forEach((a) => {
-            setDoc(doc(db, 'awards', a.id), a).catch(() => {});
-          });
+        } catch {
+          // Non-blocking Firestore notice
         }
 
         // 5. Fetch Dynamic Form Field Configs
@@ -1345,6 +1337,27 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     }
   };
 
+  const deleteMlmMember = async (id: string) => {
+    setMlmMembers((prev) => {
+      const nextMembers = prev.filter((item) => item.id !== id);
+      safeSaveToStorage(PERSISTENCE_KEYS.MEMBERS, nextMembers);
+      return nextMembers;
+    });
+
+    // 1. Direct server persistence
+    try {
+      fetch(`/api/members/item/${id}`, { method: 'DELETE' }).catch(() => {});
+    } catch {
+      // Non-blocking
+    }
+
+    try {
+      await deleteDoc(doc(db, 'mlm_members', id));
+    } catch (err) {
+      console.warn('Firestore deleteMlmMember notice:', err);
+    }
+  };
+
   /**
    * Lead Status Update (Backwards-compatible)
    */
@@ -2024,6 +2037,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         mlmMembers,
         addMlmMember,
         updateMlmMember,
+        deleteMlmMember,
         mlmLeads,
         submitMlmLead,
         updateLeadStatus,

@@ -29,6 +29,7 @@ export const MlmTrackerTab: React.FC<MlmTrackerTabProps> = ({ initialSubTab = 'm
     mlmMembers,
     addMlmMember,
     updateMlmMember,
+    deleteMlmMember,
     mlmLeads,
     updateLeadStatus,
     updateMlmLead,
@@ -47,6 +48,10 @@ export const MlmTrackerTab: React.FC<MlmTrackerTabProps> = ({ initialSubTab = 'm
   const [search, setSearch] = useState('');
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+
+  // Members Management State (Requested: إضافة عضو، إلغاء عضو وتعديل شامل)
+  const [selectedMemberForEdit, setSelectedMemberForEdit] = useState<MlmMember | null>(null);
+  const [deleteConfirmMemberId, setDeleteConfirmMemberId] = useState<string | null>(null);
 
   // Leads Management State
   const [selectedLeadForEdit, setSelectedLeadForEdit] = useState<MlmLead | null>(null);
@@ -132,6 +137,18 @@ export const MlmTrackerTab: React.FC<MlmTrackerTabProps> = ({ initialSubTab = 'm
   const handleDeleteLead = async (id: string) => {
     await deleteMlmLead(id);
     setDeleteConfirmLeadId(null);
+  };
+
+  const handleUpdateMemberFull = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedMemberForEdit) return;
+    await updateMlmMember(selectedMemberForEdit.id, selectedMemberForEdit);
+    setSelectedMemberForEdit(null);
+  };
+
+  const handleDeleteMember = async (id: string) => {
+    await deleteMlmMember(id);
+    setDeleteConfirmMemberId(null);
   };
 
   const filteredMembers = mlmMembers.filter(
@@ -235,7 +252,7 @@ export const MlmTrackerTab: React.FC<MlmTrackerTabProps> = ({ initialSubTab = 'm
                   <th className="p-3 text-start">الطلبات</th>
                   <th className="p-3 text-start">عمولاتها المستحقة</th>
                   <th className="p-3 text-start">رابط الإحالة المباشر</th>
-                  <th className="p-3 text-center">التواصل</th>
+                  <th className="p-3 text-center">الإجراءات والتواصل</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
@@ -289,15 +306,31 @@ export const MlmTrackerTab: React.FC<MlmTrackerTabProps> = ({ initialSubTab = 'm
                       </button>
                     </td>
                     <td className="p-3 text-center">
-                      <a
-                        href={`https://wa.me/${m.phone.replace(/[^0-9]/g, '')}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex p-1.5 rounded-lg text-[#25D366] hover:bg-[#25D366]/10"
-                        title="محادثة واتساب"
-                      >
-                        <MessageCircle className="w-4 h-4" />
-                      </a>
+                      <div className="flex items-center justify-center gap-1.5">
+                        <a
+                          href={`https://wa.me/${m.phone.replace(/[^0-9]/g, '')}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="p-1.5 rounded-lg text-[#25D366] hover:bg-[#25D366]/10"
+                          title="محادثة واتساب"
+                        >
+                          <MessageCircle className="w-4 h-4" />
+                        </a>
+                        <button
+                          onClick={() => setSelectedMemberForEdit(m)}
+                          className="p-1.5 rounded-lg text-[#D4AF37] hover:bg-[#D4AF37]/15 dark:text-[#E5C358]"
+                          title="تعديل بيانات العضوة الشاملة"
+                        >
+                          <Edit3 className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => setDeleteConfirmMemberId(m.id)}
+                          className="p-1.5 rounded-lg text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
+                          title="إلغاء وحذف العضوة من الفريق"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -1090,6 +1123,199 @@ export const MlmTrackerTab: React.FC<MlmTrackerTabProps> = ({ initialSubTab = 'm
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Member Edit Modal (Requested: تعديل شامل للأعضاء) */}
+      {selectedMemberForEdit && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="relative w-full max-w-xl bg-white dark:bg-[#161114] rounded-3xl shadow-2xl border border-[#D4AF37]/40 max-h-[90vh] flex flex-col overflow-hidden">
+            <div className="p-4 sm:p-5 border-b border-[#D4AF37]/20 flex items-center justify-between">
+              <div>
+                <h4 className="text-base font-bold text-[#2D2A26] dark:text-white font-serif-luxury flex items-center gap-2">
+                  <Edit3 className="w-4 h-4 text-[#C94C71]" />
+                  <span>تعديل بيانات العضوة في الفريق</span>
+                </h4>
+                <p className="text-[11px] text-gray-500">
+                  كود العضوة: <span className="font-mono font-bold text-[#C94C71]">{selectedMemberForEdit.memberCode}</span>
+                </p>
+              </div>
+              <button
+                onClick={() => setSelectedMemberForEdit(null)}
+                className="p-1 rounded-full text-gray-400 hover:text-gray-700 dark:hover:text-white hover:bg-black/5"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleUpdateMemberFull} className="p-5 overflow-y-auto space-y-4 text-start text-xs">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block font-semibold mb-1">اسم العضوة الثلاثي *</label>
+                  <input
+                    type="text"
+                    required
+                    value={selectedMemberForEdit.name}
+                    onChange={(e) => setSelectedMemberForEdit({ ...selectedMemberForEdit, name: e.target.value })}
+                    className="w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-[#D4AF37]/30 bg-white dark:bg-[#120E11] text-[#2D2A26] dark:text-white"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-semibold mb-1">كود الإحالة (Member Code) *</label>
+                  <input
+                    type="text"
+                    required
+                    value={selectedMemberForEdit.memberCode}
+                    onChange={(e) => setSelectedMemberForEdit({ ...selectedMemberForEdit, memberCode: e.target.value.toUpperCase() })}
+                    className="w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-[#D4AF37]/30 bg-white dark:bg-[#120E11] text-[#2D2A26] dark:text-white font-mono"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block font-semibold mb-1">رقم الهاتف / الواتساب</label>
+                  <input
+                    type="tel"
+                    value={selectedMemberForEdit.phone}
+                    onChange={(e) => setSelectedMemberForEdit({ ...selectedMemberForEdit, phone: e.target.value })}
+                    className="w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-[#D4AF37]/30 bg-white dark:bg-[#120E11] text-[#2D2A26] dark:text-white"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-semibold mb-1">البريد الإلكتروني</label>
+                  <input
+                    type="email"
+                    value={selectedMemberForEdit.email}
+                    onChange={(e) => setSelectedMemberForEdit({ ...selectedMemberForEdit, email: e.target.value })}
+                    className="w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-[#D4AF37]/30 bg-white dark:bg-[#120E11] text-[#2D2A26] dark:text-white"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block font-semibold mb-1">الشركة التابعة</label>
+                  <select
+                    value={selectedMemberForEdit.company}
+                    onChange={(e) => setSelectedMemberForEdit({ ...selectedMemberForEdit, company: e.target.value as 'Alialyna' | 'HomeLife' })}
+                    className="w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-[#D4AF37]/30 bg-white dark:bg-[#120E11] text-[#2D2A26] dark:text-white"
+                  >
+                    <option value="Alialyna">Alialyna (الجمال والعطور)</option>
+                    <option value="HomeLife">HomeLife (الصحة والمنزل)</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block font-semibold mb-1">الرتبة القيادية (Rank)</label>
+                  <input
+                    type="text"
+                    value={selectedMemberForEdit.rank}
+                    onChange={(e) => setSelectedMemberForEdit({ ...selectedMemberForEdit, rank: e.target.value })}
+                    className="w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-[#D4AF37]/30 bg-white dark:bg-[#120E11] text-[#2D2A26] dark:text-white"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-3 rounded-2xl bg-black/5 dark:bg-white/5 border border-[#D4AF37]/20">
+                <div>
+                  <label className="block font-semibold mb-1">إجمالي المبيعات (TL)</label>
+                  <input
+                    type="number"
+                    value={selectedMemberForEdit.totalSales}
+                    onChange={(e) => setSelectedMemberForEdit({ ...selectedMemberForEdit, totalSales: parseFloat(e.target.value) || 0 })}
+                    className="w-full px-3 py-1.5 rounded-lg border border-gray-200 dark:border-[#D4AF37]/30 bg-white dark:bg-[#120E11] text-[#2D2A26] dark:text-white font-mono"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-semibold mb-1">عدد الطلبات</label>
+                  <input
+                    type="number"
+                    value={selectedMemberForEdit.totalOrders}
+                    onChange={(e) => setSelectedMemberForEdit({ ...selectedMemberForEdit, totalOrders: parseInt(e.target.value, 10) || 0 })}
+                    className="w-full px-3 py-1.5 rounded-lg border border-gray-200 dark:border-[#D4AF37]/30 bg-white dark:bg-[#120E11] text-[#2D2A26] dark:text-white font-mono"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-semibold mb-1">العمولة المكتسبة (TL)</label>
+                  <input
+                    type="number"
+                    value={selectedMemberForEdit.totalCommission}
+                    onChange={(e) => setSelectedMemberForEdit({ ...selectedMemberForEdit, totalCommission: parseFloat(e.target.value) || 0 })}
+                    className="w-full px-3 py-1.5 rounded-lg border border-gray-200 dark:border-[#D4AF37]/30 bg-white dark:bg-[#120E11] text-[#2D2A26] dark:text-white font-mono text-emerald-600 font-bold"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block font-semibold mb-1">حالة العضوية</label>
+                <select
+                  value={selectedMemberForEdit.status}
+                  onChange={(e) => setSelectedMemberForEdit({ ...selectedMemberForEdit, status: e.target.value as MlmMember['status'] })}
+                  className="w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-[#D4AF37]/30 bg-white dark:bg-[#120E11] text-[#2D2A26] dark:text-white"
+                >
+                  <option value="active">نشطة (Active)</option>
+                  <option value="top_performer">متألقة / صدارة (Top Performer)</option>
+                  <option value="inactive">غير نشطة (Inactive)</option>
+                </select>
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-4 border-t border-[#D4AF37]/20">
+                <button
+                  type="button"
+                  onClick={() => setSelectedMemberForEdit(null)}
+                  className="px-4 py-2 rounded-xl text-xs font-semibold text-gray-600 dark:text-gray-400 hover:bg-black/5"
+                >
+                  إلغاء
+                </button>
+                <button
+                  type="submit"
+                  className="px-6 py-2 rounded-xl text-xs font-bold text-white rose-gold-gradient shadow-md flex items-center gap-1.5"
+                >
+                  <Check className="w-4 h-4" />
+                  <span>حفظ التعديلات في ملفات الموقع</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Member Delete Confirmation Modal (Requested: إلغاء عضو) */}
+      {deleteConfirmMemberId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="relative w-full max-w-sm bg-white dark:bg-[#161114] rounded-3xl shadow-2xl border border-red-500/40 p-6 text-center">
+            <div className="w-12 h-12 rounded-full bg-red-100 text-red-600 dark:bg-red-950/40 dark:text-red-400 mx-auto flex items-center justify-center mb-4">
+              <Trash2 className="w-6 h-6" />
+            </div>
+            <h4 className="text-base font-bold text-[#2D2A26] dark:text-white mb-2">
+              تأكيد إلغاء وحذف العضوة؟
+            </h4>
+            <p className="text-xs text-gray-500 mb-6 leading-relaxed">
+              هل أنتِ متأكدة من حذف هذه العضوة من قائمة الفريق وملفات الموقع؟ لن تتمكن العضوة من تتبع مبيعاتها عبر كودها بعد الإلغاء.
+            </p>
+            <div className="flex items-center justify-center gap-3">
+              <button
+                type="button"
+                onClick={() => setDeleteConfirmMemberId(null)}
+                className="px-4 py-2 rounded-xl text-xs font-semibold text-gray-600 dark:text-gray-400 hover:bg-black/5"
+              >
+                تراجع
+              </button>
+              <button
+                type="button"
+                onClick={() => handleDeleteMember(deleteConfirmMemberId)}
+                className="px-5 py-2 rounded-xl text-xs font-bold text-white bg-red-600 hover:bg-red-700 shadow-md flex items-center gap-1.5"
+              >
+                <Trash2 className="w-4 h-4" />
+                <span>نعم، حذف وإلغاء العضوة</span>
+              </button>
+            </div>
           </div>
         </div>
       )}

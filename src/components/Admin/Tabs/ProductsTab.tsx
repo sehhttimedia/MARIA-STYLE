@@ -3,10 +3,10 @@ import { useApp } from '../../../context/AppContext';
 import { Product } from '../../../types';
 import { normalizeDriveUrl, handleImageError } from '../../../utils/drive';
 import { GoogleMediaPickerModal } from '../GoogleMediaPickerModal';
-import { Plus, Edit2, Trash2, X, Check, Search, Image as ImageIcon, Sparkles, FolderPlus } from 'lucide-react';
+import { Plus, Edit2, Trash2, X, Check, Search, Image as ImageIcon, Sparkles, FolderPlus, DollarSign, Eye, EyeOff } from 'lucide-react';
 
 export const ProductsTab: React.FC = () => {
-  const { products, addProduct, updateProduct, deleteProduct } = useApp();
+  const { products, addProduct, updateProduct, deleteProduct, cms, updateCMS } = useApp();
   const [search, setSearch] = useState('');
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -34,6 +34,7 @@ export const ProductsTab: React.FC = () => {
     inStock: true,
     featured: false,
     companyOrigin: 'Alialyna',
+    hidePrice: false,
   });
 
   const [galleryInput, setGalleryInput] = useState('');
@@ -60,6 +61,7 @@ export const ProductsTab: React.FC = () => {
       inStock: true,
       featured: false,
       companyOrigin: 'Alialyna',
+      hidePrice: false,
     });
     setGalleryInput('');
     setIsModalOpen(true);
@@ -67,7 +69,7 @@ export const ProductsTab: React.FC = () => {
 
   const handleOpenEdit = (p: Product) => {
     setEditingProduct(p);
-    setForm({ ...p });
+    setForm({ ...p, hidePrice: !!p.hidePrice });
     setGalleryInput(p.galleryImages ? p.galleryImages.join('\n') : '');
     setIsModalOpen(true);
   };
@@ -136,6 +138,54 @@ export const ProductsTab: React.FC = () => {
         </div>
       </div>
 
+      {/* Global Price Visibility Banner & Control (Requested: إضافة السعر أو إلغاؤه) */}
+      <div className="p-4 rounded-2xl glass-luxury border border-[#D4AF37]/35 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-[#C94C71]/15 text-[#C94C71] flex items-center justify-center shrink-0">
+            <DollarSign className="w-5 h-5" />
+          </div>
+          <div className="text-start">
+            <div className="flex items-center gap-2">
+              <h4 className="text-xs sm:text-sm font-bold text-[#2D2A26] dark:text-white">
+                التحكم في عرض أسعار المنتجات في متجر الزوار (إظهار السعر أو إلغاؤه)
+              </h4>
+              <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${
+                cms.showProductPrices ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400' : 'bg-amber-500/15 text-amber-600 dark:text-amber-400'
+              }`}>
+                {cms.showProductPrices ? 'الأسعار ظاهرة بالمتجر' : 'الأسعار ملغاة/مخفية (تواصل وعروض)'}
+              </span>
+            </div>
+            <p className="text-[11px] text-gray-500 dark:text-[#A8988B] mt-1 leading-relaxed">
+              {cms.showProductPrices
+                ? 'الأسعار معروضة للزوار في صفحة المتجر. يمكنكِ إلغاء/إخفاء الأسعار بضغطة زر واحدة لتحفيز الزائرات على التواصل لطلب عروض وخصومات العضوات الملكية.'
+                : 'الأسعار ملغاة/مخفية حالياً في صفحة الزوار ويظهر بدلاً منها عبارة محفزة لطلب استشارة والعروض الحصرية مباشرة عبر واتساب.'}
+            </p>
+          </div>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => updateCMS({ showProductPrices: !cms.showProductPrices })}
+          className={`px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition-all shrink-0 cursor-pointer shadow-sm ${
+            cms.showProductPrices
+              ? 'bg-amber-100 text-amber-800 hover:bg-amber-200 border border-amber-300'
+              : 'bg-emerald-600 text-white hover:bg-emerald-700 shadow-emerald-500/20'
+          }`}
+        >
+          {cms.showProductPrices ? (
+            <>
+              <EyeOff className="w-4 h-4" />
+              <span>إلغاء / إخفاء الأسعار من المتجر</span>
+            </>
+          ) : (
+            <>
+              <Eye className="w-4 h-4" />
+              <span>تفعيل وإظهار الأسعار للزوار</span>
+            </>
+          )}
+        </button>
+      </div>
+
       {/* Products Table */}
       <div className="glass-luxury rounded-2xl border border-[#D4AF37]/30 overflow-hidden shadow-md">
         <div className="overflow-x-auto">
@@ -183,9 +233,17 @@ export const ProductsTab: React.FC = () => {
                         {p.companyOrigin}
                       </span>
                     </td>
-                    <td className="p-3 text-gray-500">{p.categoryLabel}</td>
-                    <td className="p-3 font-bold text-[#2D2A26] dark:text-white">
-                      {p.price} {p.currency}
+                    <td className="p-3">
+                      <div className="font-bold text-[#2D2A26] dark:text-white">
+                        {p.price} {p.currency}
+                      </div>
+                      <span className={`text-[10px] font-semibold block ${
+                        cms.showProductPrices && !p.hidePrice
+                          ? 'text-emerald-600 dark:text-emerald-400'
+                          : 'text-amber-600 dark:text-amber-400'
+                      }`}>
+                        {cms.showProductPrices && !p.hidePrice ? '● معروض بالمتجر' : '○ السعر ملغى بالمتجر'}
+                      </span>
                     </td>
                     <td className="p-3 text-gray-500">
                       {p.costPrice} {p.currency}
@@ -433,7 +491,7 @@ export const ProductsTab: React.FC = () => {
                 </div>
               </div>
 
-              <div className="flex items-center gap-4 pt-2">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-3 pt-2">
                 <label className="flex items-center gap-2 cursor-pointer">
                   <input
                     type="checkbox"
@@ -451,6 +509,17 @@ export const ProductsTab: React.FC = () => {
                     className="rounded text-[#C94C71]"
                   />
                   <span>مميز في الصفحة الرئيسية</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={!!form.hidePrice}
+                    onChange={(e) => setForm({ ...form, hidePrice: e.target.checked })}
+                    className="rounded text-[#C94C71]"
+                  />
+                  <span className="font-semibold text-amber-700 dark:text-amber-400">
+                    إلغاء/إخفاء السعر لهذا المنتج بالمتجر (تشجيع الاستشارة)
+                  </span>
                 </label>
               </div>
 

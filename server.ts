@@ -232,6 +232,14 @@ async function startServer() {
     res.json({ success: true, member: members[idx] });
   });
 
+  app.delete('/api/members/item/:id', (req, res) => {
+    const { id } = req.params;
+    let members = readJson(MEMBERS_FILE, []);
+    members = members.filter((m: any) => m.id !== id);
+    writeJson(MEMBERS_FILE, members);
+    res.json({ success: true, message: 'Member deleted successfully' });
+  });
+
   // ==========================================
   // FORM CONFIGS API (MLM & BOOKING)
   // ==========================================

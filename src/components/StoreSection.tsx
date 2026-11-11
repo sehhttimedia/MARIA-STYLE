@@ -207,17 +207,29 @@ export const StoreSection: React.FC = () => {
                       </p>
                     </div>
 
-                    {/* Motivating Offer & Order Action (Price removed for exclusive member offer) */}
+                    {/* Dynamic Pricing / Motivating Offer Action (Controlled via Admin) */}
                     <div className="pt-3.5 border-t border-[#D4AF37]/20 flex items-center justify-between gap-2">
-                      <div className="flex flex-col text-start">
-                        <span className="text-[10px] text-[#D4AF37] font-bold flex items-center gap-1">
-                          <Sparkles className="w-3 h-3 text-[#D4AF37]" />
-                          <span>عروض وهدايا حصرية</span>
-                        </span>
-                        <span className="text-xs font-bold text-[#C94C71] dark:text-[#E55B82]">
-                          تواصلي لطلب المنتج الآن
-                        </span>
-                      </div>
+                      {cms.showProductPrices && !product.hidePrice ? (
+                        <div className="flex flex-col text-start">
+                          <span className="text-[10px] text-[#8C7A6B] dark:text-[#A8988B] font-medium line-through">
+                            {Math.round(product.price * 1.25)} {product.currency}
+                          </span>
+                          <span className="text-sm font-extrabold text-[#C94C71] dark:text-[#E55B82] flex items-center gap-1">
+                            <span>{product.price} {product.currency}</span>
+                            <span className="text-[10px] px-1.5 py-0.2 rounded bg-[#C94C71]/15 text-[#C94C71] font-bold">سعر العضوات</span>
+                          </span>
+                        </div>
+                      ) : (
+                        <div className="flex flex-col text-start">
+                          <span className="text-[10px] text-[#D4AF37] font-bold flex items-center gap-1">
+                            <Sparkles className="w-3 h-3 text-[#D4AF37]" />
+                            <span>عروض وهدايا حصرية</span>
+                          </span>
+                          <span className="text-xs font-bold text-[#C94C71] dark:text-[#E55B82]">
+                            تواصلي لطلب المنتج الآن
+                          </span>
+                        </div>
+                      )}
 
                       <button
                         onClick={(e) => handleDirectWhatsAppOrder(product, e)}

@@ -133,16 +133,37 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({ product,
                 </span>
               </div>
 
-              {/* Special Offer & Motivating Call to Action (Price removed for exclusive consultation) */}
-              <div className="p-3.5 rounded-2xl bg-gradient-to-r from-[#C94C71]/10 via-[#D4AF37]/15 to-[#25D366]/10 border border-[#D4AF37]/35 mb-4 text-start">
-                <div className="flex items-center gap-1.5 mb-1 text-[#C94C71] dark:text-[#E55B82] font-bold text-xs">
-                  <Sparkles className="w-3.5 h-3.5 text-[#D4AF37]" />
-                  <span>عروض حصرية وخاصة لعضوات وزوار ماريا ستايل</span>
+              {/* Dynamic Price Display or Motivating Consultation Offer (Controlled via Admin) */}
+              {cms.showProductPrices && !product.hidePrice ? (
+                <div className="p-3.5 rounded-2xl bg-gradient-to-r from-[#C94C71]/10 via-[#D4AF37]/15 to-[#25D366]/10 border border-[#D4AF37]/35 mb-4 text-start flex items-center justify-between">
+                  <div>
+                    <span className="text-[11px] text-[#8C7A6B] dark:text-[#A8988B] line-through block">
+                      {Math.round(product.price * 1.25 * quantity)} {product.currency}
+                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-lg font-black text-[#C94C71] dark:text-[#E55B82]">
+                        {product.price * quantity} {product.currency}
+                      </span>
+                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-[#C94C71]/15 text-[#C94C71] font-bold">
+                        سعر العضوات الملكي
+                      </span>
+                    </div>
+                  </div>
+                  <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-bold bg-emerald-500/10 px-2.5 py-1 rounded-xl">
+                    عروض وهدايا إضافية 🎁
+                  </span>
                 </div>
-                <p className="text-xs text-[#2D2A26] dark:text-white font-medium leading-relaxed">
-                  تواصلِ معنا مباشرة عبر الواتساب للحصول على سعر العضوات المخفض، خصومات الباقات الملكية، وهدايا الشحن والتوصيل الفوري!
-                </p>
-              </div>
+              ) : (
+                <div className="p-3.5 rounded-2xl bg-gradient-to-r from-[#C94C71]/10 via-[#D4AF37]/15 to-[#25D366]/10 border border-[#D4AF37]/35 mb-4 text-start">
+                  <div className="flex items-center gap-1.5 mb-1 text-[#C94C71] dark:text-[#E55B82] font-bold text-xs">
+                    <Sparkles className="w-3.5 h-3.5 text-[#D4AF37]" />
+                    <span>عروض حصرية وخاصة لعضوات وزوار ماريا ستايل</span>
+                  </div>
+                  <p className="text-xs text-[#2D2A26] dark:text-white font-medium leading-relaxed">
+                    تواصلِ معنا مباشرة عبر الواتساب للحصول على سعر العضوات المخفض، خصومات الباقات الملكية، وهدايا الشحن والتوصيل الفوري!
+                  </p>
+                </div>
+              )}
 
               {/* Description */}
               <p className="text-xs sm:text-sm text-[#4A453F] dark:text-[#D1C5B8] leading-relaxed mb-4">

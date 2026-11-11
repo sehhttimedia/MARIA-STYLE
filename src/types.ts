@@ -25,6 +25,7 @@ export interface Product {
   inStock: boolean;
   featured: boolean;
   companyOrigin: 'Alialyna' | 'HomeLife' | 'MariaStyle';
+  hidePrice?: boolean;
 }
 
 export interface MlmLead {
@@ -149,6 +150,7 @@ export interface CMSContent {
   };
   alialynaDescription: string;
   homelifeDescription: string;
+  showProductPrices?: boolean;
   lastSyncedAt: string | null;
 }
 
