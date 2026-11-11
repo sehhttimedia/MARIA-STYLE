@@ -3,15 +3,28 @@ import { useApp } from '../../../context/AppContext';
 import { Product } from '../../../types';
 import { normalizeDriveUrl, handleImageError } from '../../../utils/drive';
 import { GoogleMediaPickerModal } from '../GoogleMediaPickerModal';
-import { Plus, Edit2, Trash2, X, Check, Search, Image as ImageIcon, Sparkles, FolderPlus, DollarSign, Eye, EyeOff } from 'lucide-react';
+import { Plus, Edit2, Trash2, X, Check, Search, Image as ImageIcon, Sparkles, FolderPlus, DollarSign, Eye, EyeOff, Save } from 'lucide-react';
 
 export const ProductsTab: React.FC = () => {
-  const { products, addProduct, updateProduct, deleteProduct, cms, updateCMS } = useApp();
+  const { products, addProduct, updateProduct, deleteProduct, cms, updateCMS, saveProductsToServer } = useApp();
   const [search, setSearch] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveSuccessMsg, setSaveSuccessMsg] = useState<string | null>(null);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isPickerOpen, setIsPickerOpen] = useState(false);
   const [pickerTarget, setPickerTarget] = useState<'main' | 'gallery'>('main');
+
+  const handleSaveAllProducts = async () => {
+    setIsSaving(true);
+    setSaveSuccessMsg(null);
+    const res = await saveProductsToServer();
+    setIsSaving(false);
+    if (res.success) {
+      setSaveSuccessMsg(res.message);
+      setTimeout(() => setSaveSuccessMsg(null), 4500);
+    }
+  };
 
   // Form State
   const [form, setForm] = useState<Omit<Product, 'id'>>({
@@ -105,35 +118,69 @@ export const ProductsTab: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      {/* Top Header & Actions */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div>
-          <h3 className="text-lg font-bold text-[#2D2A26] dark:text-white font-serif-luxury">
-            إدارة متجر المنتجات والكوزمتك
-          </h3>
-          <p className="text-xs text-gray-500">
-            تحكم كامل في الأسعار، التكاليف، الصور عبر Google Drive، وحساب الأرباح
-          </p>
+      {/* Sticky Save & Action Header Bar (Requested: زر حفظ عائم وثابت أعلى كل قسم) */}
+      <div className="sticky top-0 z-30 p-3 sm:p-4 rounded-2xl glass-luxury border border-[#D4AF37]/40 shadow-lg backdrop-blur-md flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#C94C71] to-[#D4AF37] text-white flex items-center justify-center shrink-0 shadow-md">
+            <Save className="w-5 h-5" />
+          </div>
+          <div className="text-start">
+            <div className="flex items-center gap-2">
+              <h3 className="text-sm sm:text-base font-bold text-[#2D2A26] dark:text-white font-serif-luxury">
+                إدارة متجر المنتجات ({products.length} منتج)
+              </h3>
+              <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 font-bold">
+                ملفات الموقع المركزية
+              </span>
+            </div>
+            <p className="text-[11px] text-gray-500 dark:text-[#A8988B] mt-0.5">
+              {saveSuccessMsg ? (
+                <span className="text-emerald-600 dark:text-emerald-400 font-bold">{saveSuccessMsg}</span>
+              ) : (
+                'أي إضافة أو تعديل يتم تثبيته فوراً لجميع الأجهزة والمتصفحات'
+              )}
+            </p>
+          </div>
         </div>
 
-        <div className="flex items-center gap-3 w-full sm:w-auto">
-          <div className="relative flex-1 sm:w-64">
+        <div className="flex flex-wrap items-center gap-2.5 w-full md:w-auto justify-end">
+          <div className="relative w-full sm:w-56">
             <Search className="w-4 h-4 absolute start-3 top-1/2 -translate-y-1/2 text-gray-400" />
             <input
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="بحث في المنتجات..."
-              className="w-full ps-9 pe-4 py-2 text-xs rounded-xl border border-gray-200 dark:border-[#D4AF37]/25 bg-white dark:bg-[#120E11] text-[#2D2A26] dark:text-white focus:outline-none"
+              className="w-full ps-9 pe-4 py-1.5 text-xs rounded-xl border border-gray-200 dark:border-[#D4AF37]/25 bg-white dark:bg-[#120E11] text-[#2D2A26] dark:text-white focus:outline-none"
             />
           </div>
 
           <button
+            type="button"
+            onClick={handleSaveAllProducts}
+            disabled={isSaving}
+            className="px-4 py-2 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-500 hover:to-teal-600 shadow-md flex items-center gap-2 transition-all hover:scale-[1.02] cursor-pointer disabled:opacity-60"
+          >
+            {isSaving ? (
+              <>
+                <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                <span>جاري الحفظ بالخادم...</span>
+              </>
+            ) : (
+              <>
+                <Save className="w-4 h-4" />
+                <span>حفظ التعديلات في ملفات الموقع</span>
+              </>
+            )}
+          </button>
+
+          <button
+            type="button"
             onClick={handleOpenAdd}
-            className="px-4 py-2 rounded-xl text-xs font-bold text-white rose-gold-gradient shadow-md flex items-center gap-1.5 shrink-0 hover:scale-[1.02]"
+            className="px-3.5 py-2 rounded-xl text-xs font-bold text-white rose-gold-gradient shadow-md flex items-center gap-1.5 shrink-0 hover:scale-[1.02] cursor-pointer"
           >
             <Plus className="w-4 h-4" />
-            <span>إضافة منتج جديد</span>
+            <span>+ إضافة منتج</span>
           </button>
         </div>
       </div>

@@ -24,5 +24,18 @@
     "adminNotes": "بانتظار اتصال أولي هاتفي",
     "createdAt": "2026-10-31T09:45:00.000Z",
     "synced": true
+  },
+  {
+    "id": "book-3",
+    "clientName": "داليا الأحمد",
+    "phone": "+905312345678",
+    "consultationType": "skincare",
+    "preferredDate": "2026-11-05",
+    "preferredTime": "16:00",
+    "notes": "استفسار عن روتين الكولاجين الثلاثي وجلسات النضارة",
+    "status": "completed",
+    "adminNotes": "تم إتمام الجلسة وطلب المنتجات",
+    "createdAt": "2026-11-01T12:00:00.000Z",
+    "synced": true
   }
 ]

@@ -1,6 +1,7 @@
 import React from 'react';
 import { AppProvider } from './context/AppContext';
 import { CustomCursor } from './components/CustomCursor';
+import { FastBrandIntro } from './components/FastBrandIntro';
 import { AnnouncementBar } from './components/AnnouncementBar';
 import { Navbar } from './components/Navbar';
 import { HeroSection } from './components/HeroSection';
@@ -19,6 +20,9 @@ import { AdminModal } from './components/Admin/AdminModal';
 const MainLayout: React.FC = () => {
   return (
     <div className="min-h-screen bg-[#FAF7F2] dark:bg-[#0C0A0B] text-[#2D2A26] dark:text-[#FAF7F2] transition-colors duration-300 relative selection:bg-[#C94C71]/30 selection:text-[#F4E8C1]">
+      {/* Luxury Non-blocking Brand Intro */}
+      <FastBrandIntro />
+
       {/* Luxury Interactive Cursor */}
       <CustomCursor />
 

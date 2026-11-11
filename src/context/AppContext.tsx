@@ -124,6 +124,13 @@ interface AppContextType {
   setActiveSheetId: (id: string) => Promise<void>;
   publishAllLocalDataToCloud: () => Promise<{ success: boolean; message: string; count: number }>;
 
+  // Explicit Section Persistence to Server Site Files (Per-section Save Buttons)
+  saveProductsToServer: () => Promise<{ success: boolean; message: string }>;
+  saveMembersToServer: () => Promise<{ success: boolean; message: string }>;
+  saveCmsToServer: (overrideCms?: Partial<CMSContent>) => Promise<{ success: boolean; message: string }>;
+  saveAwardsToServer: () => Promise<{ success: boolean; message: string }>;
+  saveBookingsToServer: () => Promise<{ success: boolean; message: string }>;
+
   // Webhook & Persistence Sync
   syncStatus: SyncStatus;
   syncAllWithWebhook: () => Promise<void>;
@@ -434,22 +441,26 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
           // Non-blocking
         }
 
-        // 2. Fetch CMS from Firestore
-        const cmsSnap = await getDoc(doc(db, 'cms_content', 'default'));
-        if (cmsSnap.exists() && isMounted) {
-          const cloudCms = cmsSnap.data() as Partial<CMSContent>;
-          setCms((prev) => {
-            // Prioritize authentic photo over any stale unsplash URLs
-            const photo = (!cloudCms.madameFatimaPhoto || cloudCms.madameFatimaPhoto.includes('unsplash.com'))
-              ? '/assets/aistudio/Fatma_d3c946d4.jpeg'
-              : cloudCms.madameFatimaPhoto;
-            const merged = { ...prev, ...cloudCms, madameFatimaPhoto: photo };
-            safeSaveToStorage(PERSISTENCE_KEYS.CMS, merged);
-            return merged;
-          });
-        } else if (!cmsSnap.exists() && isMounted) {
-          // Cloud empty: seed initial CMS to Firestore
-          setDoc(doc(db, 'cms_content', 'default'), initialCMSContent).catch(() => {});
+        // 2. Optional Firestore sync for CMS (Only if server file had no CMS)
+        try {
+          const cmsSnap = await getDoc(doc(db, 'cms_content', 'default'));
+          if (cmsSnap.exists() && isMounted) {
+            const cloudCms = cmsSnap.data() as Partial<CMSContent>;
+            setCms((prev) => {
+              // If prev is already initialized from server disk, do not let old firestore overwrite it
+              if (prev && prev.lastSyncedAt && (!cloudCms.lastSyncedAt || new Date(prev.lastSyncedAt) > new Date(cloudCms.lastSyncedAt))) {
+                return prev;
+              }
+              const photo = (!cloudCms.madameFatimaPhoto || cloudCms.madameFatimaPhoto.includes('unsplash.com'))
+                ? '/assets/aistudio/Fatma_d3c946d4.jpeg'
+                : cloudCms.madameFatimaPhoto;
+              const merged = { ...prev, ...cloudCms, madameFatimaPhoto: photo };
+              safeSaveToStorage(PERSISTENCE_KEYS.CMS, merged);
+              return merged;
+            });
+          }
+        } catch {
+          // Non-blocking
         }
 
         // 3. Optional Firestore Sync for Products (Never overwrite server disk data with stale defaults)
@@ -463,7 +474,6 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             const hasLegacyMock = cloudProducts.some((p) => p.id === 'prod-1' || p.id === 'prod-2');
             if (!hasLegacyMock && cloudProducts.length > 0) {
               setProducts((current) => {
-                // If local/server has more or equal items, preserve current server products
                 if (current.length >= cloudProducts.length) return current;
                 safeSaveToStorage(PERSISTENCE_KEYS.PRODUCTS, cloudProducts);
                 return cloudProducts;
@@ -495,43 +505,44 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
           // Non-blocking Firestore notice
         }
 
-        // 5. Fetch Dynamic Form Field Configs
+        // 5. Dynamic Form Field Configs from Firestore (if not loaded from server)
         try {
           const mlmSnap = await getDoc(doc(db, 'form_configs', 'mlm'));
           if (mlmSnap.exists() && isMounted) {
             const fields = mlmSnap.data()?.fields;
             if (Array.isArray(fields) && fields.length > 0) {
-              setMlmFieldsConfig(fields);
-              safeSaveToStorage(PERSISTENCE_KEYS.MLM_FIELDS, fields);
+              setMlmFieldsConfig((curr) => (curr.length > 0 ? curr : fields));
             }
           }
           const bookingSnap = await getDoc(doc(db, 'form_configs', 'booking'));
           if (bookingSnap.exists() && isMounted) {
             const fields = bookingSnap.data()?.fields;
             if (Array.isArray(fields) && fields.length > 0) {
-              setBookingFieldsConfig(fields);
-              safeSaveToStorage(PERSISTENCE_KEYS.BOOKING_FIELDS, fields);
+              setBookingFieldsConfig((curr) => (curr.length > 0 ? curr : fields));
             }
           }
         } catch {
           // Non-blocking
         }
 
-        // 6. Fetch MLM Members
-        const memSnap = await getDocs(collection(db, 'mlm_members'));
-        if (!memSnap.empty && isMounted) {
-          const cloudMembers: MlmMember[] = [];
-          memSnap.forEach((docItem) => {
-            cloudMembers.push({ id: docItem.id, ...(docItem.data() as Omit<MlmMember, 'id'>) });
-          });
-          if (cloudMembers.length > 0) {
-            setMlmMembers(cloudMembers);
-            safeSaveToStorage(PERSISTENCE_KEYS.MEMBERS, cloudMembers);
+        // 6. MLM Members (Server disk is authoritative; merge only if server was empty)
+        try {
+          const memSnap = await getDocs(collection(db, 'mlm_members'));
+          if (!memSnap.empty && isMounted) {
+            const cloudMembers: MlmMember[] = [];
+            memSnap.forEach((docItem) => {
+              cloudMembers.push({ id: docItem.id, ...(docItem.data() as Omit<MlmMember, 'id'>) });
+            });
+            if (cloudMembers.length > 0) {
+              setMlmMembers((curr) => {
+                if (curr.length >= cloudMembers.length) return curr;
+                safeSaveToStorage(PERSISTENCE_KEYS.MEMBERS, cloudMembers);
+                return cloudMembers;
+              });
+            }
           }
-        } else if (memSnap.empty && isMounted) {
-          initialMlmMembers.forEach((m) => {
-            setDoc(doc(db, 'mlm_members', m.id), m).catch(() => {});
-          });
+        } catch {
+          // Non-blocking
         }
 
         // 7. Fetch MLM Leads from Site Server Files (/api/leads) and Firestore
@@ -914,6 +925,115 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     }
 
     return true;
+  };
+
+  /**
+   * Explicit Per-Section Server Persistence Actions (Requested by User)
+   */
+  const saveProductsToServer = async (): Promise<{ success: boolean; message: string }> => {
+    try {
+      const res = await fetch('/api/products', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(products),
+      });
+      if (res.ok) {
+        safeSaveToStorage(PERSISTENCE_KEYS.PRODUCTS, products);
+        products.forEach((p) => {
+          setDoc(doc(db, 'products', p.id), p).catch(() => {});
+        });
+        fireConfetti();
+        return { success: true, message: `تم حفظ وتثبيت ${products.length} منتجاً في ملفات الموقع لجميع الأجهزة والزوار بنجاح!` };
+      }
+      return { success: false, message: 'تعذر حفظ المنتجات في ملفات الخادم' };
+    } catch (err: any) {
+      return { success: false, message: `خطأ في الاتصال: ${err.message}` };
+    }
+  };
+
+  const saveMembersToServer = async (): Promise<{ success: boolean; message: string }> => {
+    try {
+      const res = await fetch('/api/members', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(mlmMembers),
+      });
+      if (res.ok) {
+        safeSaveToStorage(PERSISTENCE_KEYS.MEMBERS, mlmMembers);
+        mlmMembers.forEach((m) => {
+          setDoc(doc(db, 'mlm_members', m.id), m).catch(() => {});
+        });
+        fireConfetti();
+        return { success: true, message: `تم حفظ وتثبيت بيانات ${mlmMembers.length} عضوة في ملفات الموقع بنجاح!` };
+      }
+      return { success: false, message: 'تعذر حفظ بيانات العضوات في ملفات الخادم' };
+    } catch (err: any) {
+      return { success: false, message: `خطأ في الاتصال: ${err.message}` };
+    }
+  };
+
+  const saveCmsToServer = async (overrideCms?: Partial<CMSContent>): Promise<{ success: boolean; message: string }> => {
+    const payload: CMSContent = {
+      ...cms,
+      ...(overrideCms || {}),
+      lastSyncedAt: new Date().toISOString(),
+    };
+    try {
+      const res = await fetch('/api/cms', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      if (res.ok) {
+        setCms(payload);
+        safeSaveToStorage(PERSISTENCE_KEYS.CMS, payload);
+        setDoc(doc(db, 'cms_content', 'default'), payload).catch(() => {});
+        fireConfetti();
+        return { success: true, message: 'تم حفظ وتثبيت إعدادات وهوية المنصة في ملفات الموقع لجميع الزوار!' };
+      }
+      return { success: false, message: 'تعذر حفظ إعدادات المنصة في ملفات الخادم' };
+    } catch (err: any) {
+      return { success: false, message: `خطأ في الاتصال: ${err.message}` };
+    }
+  };
+
+  const saveAwardsToServer = async (): Promise<{ success: boolean; message: string }> => {
+    try {
+      const res = await fetch('/api/awards', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(awards),
+      });
+      if (res.ok) {
+        safeSaveToStorage(PERSISTENCE_KEYS.AWARDS, awards);
+        awards.forEach((a) => {
+          setDoc(doc(db, 'awards', a.id), a).catch(() => {});
+        });
+        fireConfetti();
+        return { success: true, message: `تم حفظ وتثبيت ${awards.length} تكريماً وفيديو في ملفات الموقع بنجاح!` };
+      }
+      return { success: false, message: 'تعذر حفظ التكريمات في ملفات الخادم' };
+    } catch (err: any) {
+      return { success: false, message: `خطأ في الاتصال: ${err.message}` };
+    }
+  };
+
+  const saveBookingsToServer = async (): Promise<{ success: boolean; message: string }> => {
+    try {
+      const res = await fetch('/api/bookings', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(bookings),
+      });
+      if (res.ok) {
+        safeSaveToStorage(PERSISTENCE_KEYS.BOOKINGS, bookings);
+        fireConfetti();
+        return { success: true, message: `تم حفظ وتثبيت ${bookings.length} حجوزات واستشارات في ملفات الموقع بنجاح!` };
+      }
+      return { success: false, message: 'تعذر حفظ الاستشارات في ملفات الخادم' };
+    } catch (err: any) {
+      return { success: false, message: `خطأ في الاتصال: ${err.message}` };
+    }
   };
 
   /**
@@ -2064,6 +2184,11 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         activeSheetId,
         setActiveSheetId,
         publishAllLocalDataToCloud,
+        saveProductsToServer,
+        saveMembersToServer,
+        saveCmsToServer,
+        saveAwardsToServer,
+        saveBookingsToServer,
         syncStatus,
         syncAllWithWebhook,
         isAdminLoggedIn,

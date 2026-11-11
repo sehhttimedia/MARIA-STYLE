@@ -6,7 +6,7 @@ import { GoogleMediaPickerModal } from '../GoogleMediaPickerModal';
 import { Settings, Save, Check, RefreshCw, Sparkles, MessageCircle, Link, Image as ImageIcon, ShieldCheck, Lock, Key } from 'lucide-react';
 
 export const VisualCmsTab: React.FC = () => {
-  const { cms, updateCMS, changeAdminPassword } = useApp();
+  const { cms, updateCMS, changeAdminPassword, saveCmsToServer } = useApp();
   const [form, setForm] = useState<CMSContent>({ ...cms });
   const [savedSuccess, setSavedSuccess] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -57,6 +57,52 @@ export const VisualCmsTab: React.FC = () => {
 
   return (
     <div className="space-y-6">
+      {/* Sticky Save & Status Bar */}
+      <div className="sticky top-0 z-30 -mx-2 px-3 py-3 backdrop-blur-md bg-[#FAF7F2]/90 dark:bg-[#120E11]/90 border-b border-[#D4AF37]/30 flex flex-wrap items-center justify-between gap-3 shadow-sm rounded-2xl">
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={async () => {
+              setIsSaving(true);
+              const normalizedPayload: CMSContent = {
+                ...form,
+                logoUrl: normalizeDriveUrl(form.logoUrl, 'logo'),
+                madameFatimaPhoto: normalizeDriveUrl(form.madameFatimaPhoto, 'story'),
+              };
+              setForm(normalizedPayload);
+              const res = await saveCmsToServer(normalizedPayload);
+              setIsSaving(false);
+              if (res.success) {
+                setSavedSuccess(true);
+                setTimeout(() => setSavedSuccess(false), 4500);
+              }
+            }}
+            disabled={isSaving}
+            className="px-5 py-2 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-emerald-600 to-teal-700 shadow-md hover:shadow-lg hover:scale-[1.02] flex items-center gap-1.5 cursor-pointer disabled:opacity-50 transition-all"
+            title="حفظ وتثبيت كافة إعدادات وهوية المنصة في ملفات الموقع لجميع الزوار"
+          >
+            {isSaving ? (
+              <RefreshCw className="w-4 h-4 animate-spin text-white" />
+            ) : (
+              <Save className="w-4 h-4 text-white" />
+            )}
+            <span>{isSaving ? 'جارٍ الحفظ بالخادم...' : 'حفظ إعدادات وهوية الموقع (ملفات الخادم)'}</span>
+          </button>
+
+          {savedSuccess && (
+            <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1 bg-emerald-500/10 px-3 py-1.5 rounded-lg border border-emerald-500/30 animate-in fade-in">
+              <Check className="w-3.5 h-3.5" />
+              <span>تم حفظ الإعدادات وهوية المنصة بنجاح في ملفات الموقع لجميع الأجهزة والزوار!</span>
+            </span>
+          )}
+        </div>
+
+        <div className="text-xs text-gray-500 flex items-center gap-2">
+          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+          <span>آخر تحديث: <span className="font-mono text-gray-700 dark:text-gray-300">{cms.lastSyncedAt ? new Date(cms.lastSyncedAt).toLocaleTimeString('ar-EG') : 'مباشر'}</span></span>
+        </div>
+      </div>
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>

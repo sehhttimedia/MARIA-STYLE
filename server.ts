@@ -184,6 +184,14 @@ async function startServer() {
     res.status(201).json({ success: true, award: newAward });
   });
 
+  app.put('/api/awards/item/:id', (req, res) => {
+    const { id } = req.params;
+    let awards = readJson(AWARDS_FILE, []);
+    awards = awards.map((a: any) => (a.id === id ? { ...a, ...req.body } : a));
+    writeJson(AWARDS_FILE, awards);
+    res.json({ success: true, message: 'Award updated' });
+  });
+
   app.delete('/api/awards/item/:id', (req, res) => {
     const { id } = req.params;
     let awards = readJson(AWARDS_FILE, []);
@@ -318,6 +326,12 @@ async function startServer() {
     res.json(leads);
   });
 
+  app.put('/api/leads', (req, res) => {
+    const leads = Array.isArray(req.body) ? req.body : [];
+    writeJson(LEADS_FILE, leads);
+    res.json({ success: true, count: leads.length });
+  });
+
   app.post('/api/leads', (req, res) => {
     const leads = readJson(LEADS_FILE, []);
     const newLead = {
@@ -360,6 +374,12 @@ async function startServer() {
   app.get('/api/bookings', (_req, res) => {
     const bookings = readJson(BOOKINGS_FILE, []);
     res.json(bookings);
+  });
+
+  app.put('/api/bookings', (req, res) => {
+    const bookings = Array.isArray(req.body) ? req.body : [];
+    writeJson(BOOKINGS_FILE, bookings);
+    res.json({ success: true, count: bookings.length });
   });
 
   app.post('/api/bookings', (req, res) => {
